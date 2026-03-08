@@ -94,7 +94,7 @@ const RSVP = () => {
         guest_email: data.email,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
-        meal_preference: data.meal_preference,
+        
         message: data.message,
       };
       supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-confirmation", ...emailPayload } }).catch(() => {});
