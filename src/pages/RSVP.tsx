@@ -37,8 +37,6 @@ const rsvpSchema = z.object({
   attending: z.boolean(),
   has_plus_one: z.boolean(),
   plus_one_name: z.string().trim().max(100, "Name must be less than 100 characters").optional(),
-  meal_preference: z.string().optional(),
-  dietary_restrictions: z.string().trim().max(500, "Please keep dietary restrictions under 500 characters").optional(),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
   receive_photos: z.boolean(),
 });
@@ -59,8 +57,6 @@ const RSVP = () => {
       attending: true,
       has_plus_one: false,
       plus_one_name: "",
-      meal_preference: "",
-      dietary_restrictions: "",
       message: "",
       receive_photos: true,
     },
@@ -79,8 +75,6 @@ const RSVP = () => {
         phone: data.phone || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
-        meal_preference: data.attending ? data.meal_preference : null,
-        dietary_restrictions: data.attending ? data.dietary_restrictions : null,
         message: data.message,
       });
 
@@ -100,7 +94,7 @@ const RSVP = () => {
         guest_email: data.email,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
-        meal_preference: data.meal_preference,
+        
         message: data.message,
       };
       supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-confirmation", ...emailPayload } }).catch(() => {});
@@ -302,50 +296,7 @@ const RSVP = () => {
                       />
                     )}
 
-                    {/* Meal Preference */}
-                    <FormField
-                      control={form.control}
-                      name="meal_preference"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-display text-lg">Meal Preference</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="border-primary/20 focus:border-primary">
-                                <SelectValue placeholder="Select your meal preference" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="beef">Filet Mignon</SelectItem>
-                              <SelectItem value="chicken">Herb-Roasted Chicken</SelectItem>
-                              <SelectItem value="fish">Pan-Seared Salmon</SelectItem>
-                              <SelectItem value="vegetarian">Vegetarian Option</SelectItem>
-                              <SelectItem value="vegan">Vegan Option</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    {/* Dietary Restrictions */}
-                    <FormField
-                      control={form.control}
-                      name="dietary_restrictions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-display text-lg">Dietary Restrictions</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Allergies, dietary needs, etc."
-                              className="border-primary/20 focus:border-primary"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </>
                 )}
 

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Utensils, Heart } from "lucide-react";
+import { Users, UserCheck, UserX, Heart } from "lucide-react";
 
 interface OverviewTabProps {
   rsvps: any[];
@@ -10,12 +10,6 @@ export default function OverviewTab({ rsvps }: OverviewTabProps) {
   const attending = rsvps.filter((r) => r.attending).length;
   const declined = rsvps.filter((r) => !r.attending).length;
   const plusOnes = rsvps.filter((r) => r.plus_one_name).length;
-  const meals: Record<string, number> = {};
-  rsvps.forEach((r) => {
-    if (r.meal_preference) {
-      meals[r.meal_preference] = (meals[r.meal_preference] || 0) + 1;
-    }
-  });
 
   const stats = [
     { label: "Total RSVPs", value: total, icon: Users, color: "text-primary" },
@@ -39,25 +33,6 @@ export default function OverviewTab({ rsvps }: OverviewTabProps) {
         ))}
       </div>
 
-      {Object.keys(meals).length > 0 && (
-        <Card className="border-primary/10">
-          <CardHeader>
-            <CardTitle className="font-display text-lg flex items-center gap-2">
-              <Utensils className="h-5 w-5 text-primary" /> Meal Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(meals).map(([meal, count]) => (
-                <div key={meal} className="bg-muted rounded-lg p-3 text-center">
-                  <p className="font-semibold text-foreground">{count}</p>
-                  <p className="text-sm text-muted-foreground capitalize">{meal}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
