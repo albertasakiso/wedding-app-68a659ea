@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
@@ -8,15 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Gift, Heart, Loader2, CreditCard, Smartphone, Building2, Check, Users } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send } from "lucide-react";
 
 interface GiftOption {
   id: string;
@@ -35,32 +33,19 @@ interface GiftWallEntry {
   created_at: string;
 }
 
-interface PaymentSettings {
-  paystack_public_key: string | null;
-  stripe_public_key: string | null;
-  momo_enabled: boolean;
-  card_enabled: boolean;
-  bank_enabled: boolean;
-  currency: string;
-}
-
 export default function Gifts() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [gifts, setGifts] = useState<GiftOption[]>([]);
   const [giftWall, setGiftWall] = useState<GiftWallEntry[]>([]);
-  const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGift, setSelectedGift] = useState<GiftOption | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState(false);
 
-  // Form state
+  // Confirmation form state
   const [donorName, setDonorName] = useState("");
-  const [donorEmail, setDonorEmail] = useState("");
-  const [donorPhone, setDonorPhone] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [donorMessage, setDonorMessage] = useState("");
 
   const fetchGifts = async () => {
     try {
@@ -70,7 +55,6 @@ export default function Gifts() {
       ]);
       if (giftsRes.error) throw giftsRes.error;
       setGifts(giftsRes.data.gifts || []);
-      setSettings(giftsRes.data.settings || null);
       setGiftWall(wallRes.data || []);
     } catch {
       toast.error("Failed to load gifts");
@@ -79,126 +63,52 @@ export default function Gifts() {
     }
   };
 
-  // Verify payment on return
-  useEffect(() => {
-    const verifyParam = searchParams.get("verify");
-    const reference = searchParams.get("reference") || searchParams.get("trxref");
-    const sessionId = searchParams.get("session_id");
-
-    if (verifyParam === "paystack" && reference) {
-      supabase.functions
-        .invoke("payment-api", { body: { action: "verify-paystack", reference } })
-        .then(({ data }) => {
-          if (data?.verified) {
-            setVerified(true);
-            toast.success("Thank you for your generous gift! 🎉");
-          } else {
-            toast.error("Payment could not be verified");
-          }
-          setSearchParams({});
-          fetchGifts();
-        });
-    } else if (verifyParam === "stripe" && sessionId) {
-      supabase.functions
-        .invoke("payment-api", { body: { action: "verify-stripe", session_id: sessionId } })
-        .then(({ data }) => {
-          if (data?.verified) {
-            setVerified(true);
-            toast.success("Thank you for your generous gift! 🎉");
-          } else {
-            toast.error("Payment could not be verified");
-          }
-          setSearchParams({});
-          fetchGifts();
-        });
-    }
-  }, []);
-
   useEffect(() => {
     fetchGifts();
   }, []);
 
   const handleContribute = (gift: GiftOption) => {
     setSelectedGift(gift);
-    setAmount("");
-    setPaymentMethod("card");
+    setConfirmed(false);
+    setDonorName("");
+    setDonorMessage("");
     setIsModalOpen(true);
   };
 
-  const handlePayment = async () => {
-    if (!selectedGift || !donorName.trim() || !amount || Number(amount) <= 0) {
-      toast.error("Please fill in your name and a valid amount");
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    toast.success("Copied!");
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleConfirmGift = async () => {
+    if (!donorName.trim()) {
+      toast.error("Please enter your name");
       return;
     }
-
-    setIsProcessing(true);
-    const callbackUrl = window.location.origin + "/gifts";
-
+    setIsSubmitting(true);
     try {
-      if (paymentMethod === "card" && settings?.stripe_public_key) {
-        // Use Stripe for international cards
-        const { data, error } = await supabase.functions.invoke("payment-api", {
-          body: {
-            action: "create-stripe-session",
-            gift_option_id: selectedGift.id,
-            gift_title: selectedGift.title,
-            donor_name: donorName,
-            donor_email: donorEmail,
-            donor_phone: donorPhone,
-            amount: Number(amount),
-            callback_url: callbackUrl,
-          },
-        });
-        if (error || data?.error) throw new Error(data?.error || error?.message);
-        window.location.href = data.url;
-        return;
-      }
-
-      // Use Paystack for MoMo, card, bank
       const { data, error } = await supabase.functions.invoke("payment-api", {
         body: {
-          action: "initialize-paystack",
-          gift_option_id: selectedGift.id,
-          donor_name: donorName,
-          donor_email: donorEmail,
-          donor_phone: donorPhone,
-          amount: Number(amount),
-          payment_method: paymentMethod,
-          callback_url: callbackUrl + "?verify=paystack",
+          action: "record-manual-gift",
+          donor_name: donorName.trim(),
+          message: donorMessage.trim() || null,
+          gift_option_id: selectedGift?.id,
         },
       });
       if (error || data?.error) throw new Error(data?.error || error?.message);
-      window.location.href = data.authorization_url;
+      setConfirmed(true);
+      toast.success("Thank you for your gift! 🎉");
+      fetchGifts();
     } catch (e: any) {
-      toast.error(e.message || "Payment failed");
-      setIsProcessing(false);
+      toast.error(e.message || "Failed to record gift");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const currencySymbol = settings?.currency === "USD" ? "$" : settings?.currency === "EUR" ? "€" : "GH₵";
-
-  if (verified) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <div className="pt-32 pb-20 flex items-center justify-center">
-          <div className="text-center max-w-md mx-auto px-4">
-            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check className="w-10 h-10 text-primary" />
-            </div>
-            <h1 className="font-display text-3xl text-foreground mb-4">Thank You!</h1>
-            <p className="text-muted-foreground font-body mb-8">
-              Your generous gift has been received. We truly appreciate your love and support!
-            </p>
-            <Button onClick={() => setVerified(false)} className="bg-primary text-primary-foreground">
-              Back to Gifts
-            </Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  const currencySymbol = "GH₵";
 
   return (
     <div className="min-h-screen bg-background">
@@ -325,92 +235,143 @@ export default function Gifts() {
         </section>
       )}
 
-      {/* Payment Modal */}
+      {/* Payment Details Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display text-xl">
               Contribute to {selectedGift?.title}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div>
-              <Label className="font-body">Your Name *</Label>
-              <Input
-                value={donorName}
-                onChange={(e) => setDonorName(e.target.value)}
-                placeholder="Full name"
-              />
+          {confirmed ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-primary" />
+              </div>
+              <h3 className="font-display text-xl text-foreground mb-2">Thank You!</h3>
+              <p className="text-muted-foreground font-body text-sm">
+                Your gift has been recorded. We truly appreciate your generosity!
+              </p>
+              <Button onClick={() => setIsModalOpen(false)} className="mt-4 bg-primary text-primary-foreground">
+                Close
+              </Button>
             </div>
-            <div>
-              <Label className="font-body">Email</Label>
-              <Input
-                type="email"
-                value={donorEmail}
-                onChange={(e) => setDonorEmail(e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-            <div>
-              <Label className="font-body">Phone</Label>
-              <Input
-                type="tel"
-                value={donorPhone}
-                onChange={(e) => setDonorPhone(e.target.value)}
-                placeholder="0XX XXX XXXX"
-              />
-            </div>
-            <div>
-              <Label className="font-body">Amount ({currencySymbol}) *</Label>
-              <Input
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="100"
-              />
-            </div>
+          ) : (
+            <div className="space-y-5 py-2">
+              <p className="text-muted-foreground font-body text-sm">
+                Send your gift via any of the options below, then confirm at the bottom so we can add you to our Gift Wall 💛
+              </p>
 
-            <div>
-              <Label className="font-body mb-3 block">Payment Method</Label>
-              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-2">
-                {settings?.momo_enabled && (
-                  <div className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer">
-                    <RadioGroupItem value="momo" id="momo" />
-                    <Smartphone className="w-4 h-4 text-primary" />
-                    <Label htmlFor="momo" className="cursor-pointer font-body">Mobile Money (MoMo)</Label>
-                  </div>
-                )}
-                {settings?.card_enabled && (
-                  <div className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer">
-                    <RadioGroupItem value="card" id="card" />
-                    <CreditCard className="w-4 h-4 text-primary" />
-                    <Label htmlFor="card" className="cursor-pointer font-body">Card Payment</Label>
-                  </div>
-                )}
-                {settings?.bank_enabled && (
-                  <div className="flex items-center space-x-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer">
-                    <RadioGroupItem value="bank" id="bank" />
-                    <Building2 className="w-4 h-4 text-primary" />
-                    <Label htmlFor="bank" className="cursor-pointer font-body">Bank Transfer</Label>
-                  </div>
-                )}
-              </RadioGroup>
-            </div>
+              {/* MTN MoMo */}
+              <div className="border border-border rounded-lg p-4 space-y-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Smartphone className="w-4 h-4 text-yellow-600" />
+                  <span className="font-body font-semibold text-foreground text-sm">MTN Mobile Money</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-foreground text-lg font-medium tracking-wide">024 6904618</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard("0246904618", "mtn")}
+                    className="h-8 px-2"
+                  >
+                    {copiedField === "mtn" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
 
-            <Button
-              onClick={handlePayment}
-              disabled={isProcessing || !donorName.trim() || !amount}
-              className="w-full bg-primary text-primary-foreground"
-            >
-              {isProcessing ? (
-                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
-              ) : (
-                <>Pay {currencySymbol}{amount || "0"}</>
-              )}
-            </Button>
-          </div>
+              {/* Telecel */}
+              <div className="border border-border rounded-lg p-4 space-y-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Smartphone className="w-4 h-4 text-red-600" />
+                  <span className="font-body font-semibold text-foreground text-sm">Telecel</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-body text-foreground text-lg font-medium tracking-wide">020 4532502</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => copyToClipboard("0204532502", "telecel")}
+                    className="h-8 px-2"
+                  >
+                    {copiedField === "telecel" ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Bank */}
+              <div className="border border-border rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className="w-4 h-4 text-blue-600" />
+                  <span className="font-body font-semibold text-foreground text-sm">Bank Transfer</span>
+                </div>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm font-body">
+                  <span className="text-muted-foreground">Account Name</span>
+                  <span className="text-foreground font-medium">Asakiso Apiligu</span>
+                  <span className="text-muted-foreground">Account No.</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-foreground font-medium">8011010337930</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyToClipboard("8011010337930", "acct")}
+                      className="h-6 px-1"
+                    >
+                      {copiedField === "acct" ? <Check className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                  <span className="text-muted-foreground">Bank</span>
+                  <span className="text-foreground font-medium">GCB Bank PLC</span>
+                  <span className="text-muted-foreground">Swift Code</span>
+                  <span className="text-foreground font-medium">GHCBGHAC</span>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-3 text-xs text-muted-foreground font-body">After sending, confirm below</span>
+                </div>
+              </div>
+
+              {/* Confirmation Form */}
+              <div className="space-y-3">
+                <div>
+                  <Label className="font-body text-sm">Your Name *</Label>
+                  <Input
+                    value={donorName}
+                    onChange={(e) => setDonorName(e.target.value)}
+                    placeholder="Full name"
+                  />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Message (optional)</Label>
+                  <Textarea
+                    value={donorMessage}
+                    onChange={(e) => setDonorMessage(e.target.value)}
+                    placeholder="A short note or blessing..."
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  onClick={handleConfirmGift}
+                  disabled={isSubmitting || !donorName.trim()}
+                  className="w-full bg-primary text-primary-foreground"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirming...</>
+                  ) : (
+                    <><Send className="w-4 h-4 mr-2" /> Confirm My Gift</>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

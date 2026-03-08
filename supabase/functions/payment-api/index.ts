@@ -284,6 +284,34 @@ Deno.serve(async (req) => {
         return json({ status, verified: status === "completed" });
       }
 
+      case "record-manual-gift": {
+        const { donor_name, message, gift_option_id } = params;
+        if (!donor_name?.trim()) return json({ error: "Name is required" }, 400);
+
+        const { error: insertErr } = await supabase
+          .from("gift_wall")
+          .insert({
+            donor_name: donor_name.trim(),
+            gift_type: "cash",
+            message: message || null,
+          });
+
+        if (insertErr) return json({ error: insertErr.message }, 400);
+
+        // Fire thank-you email (best effort)
+        if (gift_option_id) {
+          const { data: giftOpt } = await supabase.from("gift_options").select("title").eq("id", gift_option_id).single();
+          const emailBase = { donor_name: donor_name.trim(), gift_title: giftOpt?.title || "Gift", payment_provider: "manual" };
+          fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` },
+            body: JSON.stringify({ action: "send-gift-admin-alert", ...emailBase }),
+          }).catch(() => {});
+        }
+
+        return json({ success: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
