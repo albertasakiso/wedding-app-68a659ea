@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { adminApi } from "@/lib/admin-api";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { Mail, Save, Loader2 } from "lucide-react";
 
 interface EmailSettingsTabProps {
