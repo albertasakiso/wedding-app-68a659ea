@@ -160,13 +160,15 @@ Deno.serve(async (req) => {
           .update({ status, payment_reference: params.reference })
           .eq("id", params.reference);
 
-        // Send email notifications on success
+        // Send email notifications and add to gift wall on success
         if (status === "completed") {
           const { data: paymentRec } = await supabase.from("gift_payments").select("*, gift_options(title)").eq("id", params.reference).single();
           if (paymentRec) {
             const emailBase = { donor_name: paymentRec.donor_name, donor_email: paymentRec.donor_email, amount: paymentRec.amount, currency: paymentRec.currency, gift_title: paymentRec.gift_options?.title || "Gift", payment_provider: "paystack" };
             fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-thankyou", ...emailBase }) }).catch(() => {});
             fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-admin-alert", ...emailBase }) }).catch(() => {});
+            // Auto-add to gift wall
+            await supabase.from("gift_wall").insert({ donor_name: paymentRec.donor_name, gift_type: "cash" }).catch(() => {});
           }
         }
 
@@ -266,13 +268,15 @@ Deno.serve(async (req) => {
             .update({ status, payment_reference: session.id })
             .eq("id", paymentId);
 
-          // Send email notifications on success
+          // Send email notifications and add to gift wall on success
           if (status === "completed") {
             const { data: paymentRec } = await supabase.from("gift_payments").select("*, gift_options(title)").eq("id", paymentId).single();
             if (paymentRec) {
               const emailBase = { donor_name: paymentRec.donor_name, donor_email: paymentRec.donor_email, amount: paymentRec.amount, currency: paymentRec.currency, gift_title: paymentRec.gift_options?.title || "Gift", payment_provider: "stripe" };
               fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-thankyou", ...emailBase }) }).catch(() => {});
               fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-admin-alert", ...emailBase }) }).catch(() => {});
+              // Auto-add to gift wall
+              await supabase.from("gift_wall").insert({ donor_name: paymentRec.donor_name, gift_type: "cash" }).catch(() => {});
             }
           }
         }

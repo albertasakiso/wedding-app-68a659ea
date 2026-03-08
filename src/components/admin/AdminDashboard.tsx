@@ -43,7 +43,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null, gift_wall = [] } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,7 +78,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="venue"><VenueTab venue={venue} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
-          <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} giftWall={gift_wall} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="payment-settings"><PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="email-settings"><EmailSettingsTab settings={email_settings} onRefresh={handleRefresh} /></TabsContent>

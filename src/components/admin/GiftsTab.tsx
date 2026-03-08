@@ -12,7 +12,10 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Trash2, Edit, Gift, DollarSign } from "lucide-react";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Plus, Trash2, Edit, Eye, EyeOff } from "lucide-react";
 
 interface GiftOption {
   id: string;
@@ -36,19 +39,35 @@ interface GiftPayment {
   created_at: string;
 }
 
+interface GiftWallEntry {
+  id: string;
+  donor_name: string;
+  gift_type: string;
+  message: string | null;
+  is_visible: boolean;
+  created_at: string;
+}
+
 interface GiftsTabProps {
   gifts: GiftOption[];
   payments: GiftPayment[];
+  giftWall: GiftWallEntry[];
   onRefresh: () => void;
 }
 
-export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) {
+export default function GiftsTab({ gifts, payments, giftWall, onRefresh }: GiftsTabProps) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editGift, setEditGift] = useState<GiftOption | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+
+  // Gift wall form
+  const [isWallAddOpen, setIsWallAddOpen] = useState(false);
+  const [wallDonorName, setWallDonorName] = useState("");
+  const [wallGiftType, setWallGiftType] = useState("kind");
+  const [wallMessage, setWallMessage] = useState("");
 
   const completedPayments = payments.filter((p) => p.status === "completed");
   const totalCollected = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
@@ -66,19 +85,14 @@ export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) 
     try {
       if (editGift) {
         await adminApi("update-gift", {
-          id: editGift.id,
-          title,
-          description: description || null,
-          target_amount: Number(targetAmount) || 0,
-          image_url: imageUrl || null,
+          id: editGift.id, title, description: description || null,
+          target_amount: Number(targetAmount) || 0, image_url: imageUrl || null,
         });
         toast.success("Gift updated");
       } else {
         await adminApi("insert-gift", {
-          title,
-          description: description || null,
-          target_amount: Number(targetAmount) || 0,
-          image_url: imageUrl || null,
+          title, description: description || null,
+          target_amount: Number(targetAmount) || 0, image_url: imageUrl || null,
         });
         toast.success("Gift added");
       }
@@ -119,13 +133,67 @@ export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) 
     setIsAddOpen(true);
   };
 
+  // Gift wall handlers
+  const handleAddWallEntry = async () => {
+    if (!wallDonorName.trim()) return toast.error("Donor name required");
+    try {
+      await adminApi("insert-gift-wall", {
+        donor_name: wallDonorName,
+        gift_type: wallGiftType,
+        message: wallMessage || null,
+      });
+      toast.success("Gift wall entry added");
+      setWallDonorName("");
+      setWallGiftType("kind");
+      setWallMessage("");
+      setIsWallAddOpen(false);
+      onRefresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleToggleWallVisibility = async (entry: GiftWallEntry) => {
+    try {
+      await adminApi("update-gift-wall", { id: entry.id, is_visible: !entry.is_visible });
+      onRefresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const handleDeleteWallEntry = async (id: string) => {
+    if (!confirm("Delete this gift wall entry?")) return;
+    try {
+      await adminApi("delete-gift-wall", { id });
+      toast.success("Deleted");
+      onRefresh();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   const giftTotals: Record<string, number> = {};
   completedPayments.forEach((p) => {
     giftTotals[p.gift_option_id] = (giftTotals[p.gift_option_id] || 0) + Number(p.amount);
   });
 
+  const giftTypeBadge = (type: string) => {
+    const styles: Record<string, string> = {
+      cash: "bg-green-100 text-green-700",
+      kind: "bg-blue-100 text-blue-700",
+      both: "bg-purple-100 text-purple-700",
+    };
+    return (
+      <span className={`text-xs px-2 py-1 rounded-full capitalize ${styles[type] || styles.cash}`}>
+        {type}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Total Gifts</CardTitle></CardHeader>
@@ -136,11 +204,12 @@ export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) 
           <CardContent><p className="text-2xl font-bold text-primary">GH₵{totalCollected.toLocaleString()}</p></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Payments</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-bold text-foreground">{completedPayments.length}</p></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Gift Wall Entries</CardTitle></CardHeader>
+          <CardContent><p className="text-2xl font-bold text-foreground">{giftWall.length}</p></CardContent>
         </Card>
       </div>
 
+      {/* Gift Registry */}
       <div className="flex justify-between items-center">
         <h3 className="font-display text-lg text-foreground">Gift Registry</h3>
         <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
@@ -148,9 +217,7 @@ export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) 
             <Button className="gap-2 bg-primary text-primary-foreground"><Plus className="h-4 w-4" /> Add Gift</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editGift ? "Edit Gift" : "Add Gift"}</DialogTitle>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>{editGift ? "Edit Gift" : "Add Gift"}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-2">
               <div><Label>Title *</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
               <div><Label>Description</Label><Input value={description} onChange={(e) => setDescription(e.target.value)} /></div>
@@ -178,15 +245,74 @@ export default function GiftsTab({ gifts, payments, onRefresh }: GiftsTabProps) 
               <TableCell className="font-medium">{gift.title}</TableCell>
               <TableCell>GH₵{gift.target_amount.toLocaleString()}</TableCell>
               <TableCell className="text-primary font-medium">GH₵{(giftTotals[gift.id] || 0).toLocaleString()}</TableCell>
-              <TableCell>
-                <Switch checked={gift.is_active} onCheckedChange={() => handleToggle(gift)} />
-              </TableCell>
+              <TableCell><Switch checked={gift.is_active} onCheckedChange={() => handleToggle(gift)} /></TableCell>
               <TableCell className="flex gap-2">
                 <Button variant="ghost" size="icon" onClick={() => openEdit(gift)}><Edit className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" onClick={() => handleDelete(gift.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
               </TableCell>
             </TableRow>
           ))}
+        </TableBody>
+      </Table>
+
+      {/* Gift Wall Management */}
+      <div className="flex justify-between items-center mt-8">
+        <h3 className="font-display text-lg text-foreground">Gift Wall</h3>
+        <Dialog open={isWallAddOpen} onOpenChange={setIsWallAddOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2 bg-primary text-primary-foreground"><Plus className="h-4 w-4" /> Record Physical Gift</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Record Physical Gift</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-2">
+              <div><Label>Donor Name *</Label><Input value={wallDonorName} onChange={(e) => setWallDonorName(e.target.value)} placeholder="Name of donor" /></div>
+              <div>
+                <Label>Gift Type</Label>
+                <Select value={wallGiftType} onValueChange={setWallGiftType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="kind">In Kind</SelectItem>
+                    <SelectItem value="both">Both</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div><Label>Message (optional)</Label><Input value={wallMessage} onChange={(e) => setWallMessage(e.target.value)} placeholder="Optional thank-you note" /></div>
+              <Button onClick={handleAddWallEntry} className="w-full bg-primary text-primary-foreground">Add to Gift Wall</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Donor</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Message</TableHead>
+            <TableHead>Visible</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {giftWall.map((entry) => (
+            <TableRow key={entry.id}>
+              <TableCell className="font-medium">{entry.donor_name}</TableCell>
+              <TableCell>{giftTypeBadge(entry.gift_type)}</TableCell>
+              <TableCell className="text-muted-foreground text-sm">{entry.message || "—"}</TableCell>
+              <TableCell>
+                <Button variant="ghost" size="icon" onClick={() => handleToggleWallVisibility(entry)}>
+                  {entry.is_visible ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </TableCell>
+              <TableCell>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteWallEntry(entry.id)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {giftWall.length === 0 && (
+            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No gift wall entries yet</TableCell></TableRow>
+          )}
         </TableBody>
       </Table>
 

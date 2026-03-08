@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings, emailSettings] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings, emailSettings, giftWall] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
           supabase.from("gift_payments").select("*").order("created_at", { ascending: false }),
           supabase.from("payment_settings").select("*").limit(1).single(),
           supabase.from("email_settings").select("*").limit(1).single(),
+          supabase.from("gift_wall").select("*").order("created_at", { ascending: false }),
         ]);
         return json({
           rsvps: rsvps.data || [],
@@ -84,6 +85,7 @@ Deno.serve(async (req) => {
           gift_payments: giftPayments.data || [],
           payment_settings: paymentSettings.data || null,
           email_settings: emailSettings.data || null,
+          gift_wall: giftWall.data || [],
         });
       }
 
@@ -231,6 +233,29 @@ Deno.serve(async (req) => {
           const { error } = await supabase.from("email_settings").insert(updates);
           if (error) return json({ error: error.message }, 400);
         }
+        return json({ success: true });
+      }
+
+      case "insert-gift-wall": {
+        const { error } = await supabase.from("gift_wall").insert({
+          donor_name: params.donor_name,
+          gift_type: params.gift_type || "kind",
+          message: params.message || null,
+        });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-gift-wall": {
+        const { id, ...updates } = params;
+        const { error } = await supabase.from("gift_wall").update(updates).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "delete-gift-wall": {
+        const { error } = await supabase.from("gift_wall").delete().eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
         return json({ success: true });
       }
 

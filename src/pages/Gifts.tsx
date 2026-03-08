@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Gift, Heart, Loader2, CreditCard, Smartphone, Building2, Check } from "lucide-react";
+import { Gift, Heart, Loader2, CreditCard, Smartphone, Building2, Check, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface GiftOption {
   id: string;
@@ -24,6 +25,14 @@ interface GiftOption {
   target_amount: number;
   image_url: string | null;
   collected: number;
+}
+
+interface GiftWallEntry {
+  id: string;
+  donor_name: string;
+  gift_type: string;
+  message: string | null;
+  created_at: string;
 }
 
 interface PaymentSettings {
@@ -38,6 +47,7 @@ interface PaymentSettings {
 export default function Gifts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gifts, setGifts] = useState<GiftOption[]>([]);
+  const [giftWall, setGiftWall] = useState<GiftWallEntry[]>([]);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGift, setSelectedGift] = useState<GiftOption | null>(null);
@@ -54,12 +64,14 @@ export default function Gifts() {
 
   const fetchGifts = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("payment-api", {
-        body: { action: "get-gifts" },
-      });
-      if (error) throw error;
-      setGifts(data.gifts || []);
-      setSettings(data.settings || null);
+      const [giftsRes, wallRes] = await Promise.all([
+        supabase.functions.invoke("payment-api", { body: { action: "get-gifts" } }),
+        supabase.from("gift_wall").select("id, donor_name, gift_type, message, created_at").order("created_at", { ascending: false }),
+      ]);
+      if (giftsRes.error) throw giftsRes.error;
+      setGifts(giftsRes.data.gifts || []);
+      setSettings(giftsRes.data.settings || null);
+      setGiftWall(wallRes.data || []);
     } catch {
       toast.error("Failed to load gifts");
     } finally {
@@ -269,6 +281,49 @@ export default function Gifts() {
           )}
         </div>
       </section>
+
+      {/* Gift Wall */}
+      {giftWall.length > 0 && (
+        <section className="pb-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <Users className="w-8 h-8 text-primary mx-auto mb-4" />
+              <h2 className="font-display text-3xl md:text-4xl text-foreground mb-3">Gift Wall</h2>
+              <p className="text-muted-foreground font-body text-lg max-w-xl mx-auto">
+                A heartfelt thank you to everyone who has blessed us with a gift
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-5xl mx-auto">
+              {giftWall.map((entry) => {
+                const typeColor: Record<string, string> = {
+                  cash: "bg-green-50 border-green-200",
+                  kind: "bg-blue-50 border-blue-200",
+                  both: "bg-purple-50 border-purple-200",
+                };
+                const badgeVariant: Record<string, string> = {
+                  cash: "bg-green-100 text-green-700",
+                  kind: "bg-blue-100 text-blue-700",
+                  both: "bg-purple-100 text-purple-700",
+                };
+                return (
+                  <div
+                    key={entry.id}
+                    className={`rounded-xl border p-4 text-center transition-shadow hover:shadow-md ${typeColor[entry.gift_type] || typeColor.cash}`}
+                  >
+                    <p className="font-display text-sm font-semibold text-foreground mb-2">{entry.donor_name}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${badgeVariant[entry.gift_type] || badgeVariant.cash}`}>
+                      {entry.gift_type === "kind" ? "In Kind" : entry.gift_type === "both" ? "Cash & Kind" : "Cash"}
+                    </span>
+                    {entry.message && (
+                      <p className="text-xs text-muted-foreground mt-2 italic">"{entry.message}"</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Payment Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
