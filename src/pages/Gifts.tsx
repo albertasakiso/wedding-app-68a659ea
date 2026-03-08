@@ -15,7 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Gift, Heart, Loader2, CreditCard, Smartphone, Building2, Check } from "lucide-react";
+import { Gift, Heart, Loader2, CreditCard, Smartphone, Building2, Check, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface GiftOption {
   id: string;
@@ -24,6 +25,14 @@ interface GiftOption {
   target_amount: number;
   image_url: string | null;
   collected: number;
+}
+
+interface GiftWallEntry {
+  id: string;
+  donor_name: string;
+  gift_type: string;
+  message: string | null;
+  created_at: string;
 }
 
 interface PaymentSettings {
