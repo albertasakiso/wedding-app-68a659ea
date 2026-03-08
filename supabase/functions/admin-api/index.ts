@@ -184,6 +184,42 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      case "insert-gift": {
+        const { error } = await supabase.from("gift_options").insert({
+          title: params.title,
+          description: params.description || null,
+          target_amount: params.target_amount || 0,
+          image_url: params.image_url || null,
+        });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-gift": {
+        const { id, ...updates } = params;
+        const { error } = await supabase.from("gift_options").update(updates).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "delete-gift": {
+        const { error } = await supabase.from("gift_options").delete().eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-payment-settings": {
+        const { id, ...updates } = params;
+        if (id) {
+          const { error } = await supabase.from("payment_settings").update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+        } else {
+          const { error } = await supabase.from("payment_settings").insert(updates);
+          if (error) return json({ error: error.message }, 400);
+        }
+        return json({ success: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
