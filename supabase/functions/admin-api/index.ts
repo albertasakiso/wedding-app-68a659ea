@@ -220,6 +220,18 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      case "update-email-settings": {
+        const { id, ...updates } = params;
+        if (id) {
+          const { error } = await supabase.from("email_settings").update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+        } else {
+          const { error } = await supabase.from("email_settings").insert(updates);
+          if (error) return json({ error: error.message }, 400);
+        }
+        return json({ success: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }

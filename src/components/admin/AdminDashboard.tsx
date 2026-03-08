@@ -81,6 +81,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="payment-settings"><PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="email-settings"><EmailSettingsTab settings={email_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>
       </main>
