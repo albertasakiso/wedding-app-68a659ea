@@ -40,7 +40,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [] } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
