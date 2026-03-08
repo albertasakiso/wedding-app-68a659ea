@@ -73,6 +73,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>
       </main>
     </div>

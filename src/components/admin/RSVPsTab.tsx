@@ -91,6 +91,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.guest_name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.email || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{r.phone || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={r.attending ? "default" : "destructive"}>
                       {r.attending ? "Attending" : "Declined"}
