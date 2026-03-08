@@ -71,6 +71,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
             <TableRow className="bg-muted/50">
               <TableHead>Guest</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Plus One</TableHead>
               <TableHead>Meal</TableHead>
