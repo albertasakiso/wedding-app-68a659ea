@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell } from "lucide-react";
 import { adminApi, clearAdminToken } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -14,6 +14,7 @@ import SettingsTab from "./SettingsTab";
 import EmailListTab from "./EmailListTab";
 import GiftsTab from "./GiftsTab";
 import PaymentSettingsTab from "./PaymentSettingsTab";
+import EmailSettingsTab from "./EmailSettingsTab";
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -42,7 +43,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -67,6 +68,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="gifts" className="gap-2"><Gift className="h-4 w-4" /> Gifts</TabsTrigger>
             <TabsTrigger value="payment-settings" className="gap-2"><CreditCard className="h-4 w-4" /> Payments</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
+            <TabsTrigger value="email-settings" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
             <TabsTrigger value="email-list" className="gap-2"><Mail className="h-4 w-4" /> Email List</TabsTrigger>
           </TabsList>
 
@@ -79,6 +81,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="payment-settings"><PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="email-settings"><EmailSettingsTab settings={email_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>
       </main>

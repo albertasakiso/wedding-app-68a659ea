@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings, emailSettings] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
@@ -71,6 +71,7 @@ Deno.serve(async (req) => {
           supabase.from("gift_options").select("*").order("created_at", { ascending: true }),
           supabase.from("gift_payments").select("*").order("created_at", { ascending: false }),
           supabase.from("payment_settings").select("*").limit(1).single(),
+          supabase.from("email_settings").select("*").limit(1).single(),
         ]);
         return json({
           rsvps: rsvps.data || [],
@@ -82,6 +83,7 @@ Deno.serve(async (req) => {
           gift_options: giftOptions.data || [],
           gift_payments: giftPayments.data || [],
           payment_settings: paymentSettings.data || null,
+          email_settings: emailSettings.data || null,
         });
       }
 
@@ -215,6 +217,18 @@ Deno.serve(async (req) => {
           if (error) return json({ error: error.message }, 400);
         } else {
           const { error } = await supabase.from("payment_settings").insert(updates);
+          if (error) return json({ error: error.message }, 400);
+        }
+        return json({ success: true });
+      }
+
+      case "update-email-settings": {
+        const { id, ...updates } = params;
+        if (id) {
+          const { error } = await supabase.from("email_settings").update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+        } else {
+          const { error } = await supabase.from("email_settings").insert(updates);
           if (error) return json({ error: error.message }, 400);
         }
         return json({ success: true });
