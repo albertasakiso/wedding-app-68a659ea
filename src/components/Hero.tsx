@@ -60,9 +60,9 @@ const Hero = () => {
 
         {/* Names */}
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-4 animate-slide-up">
-          <span className="text-primary">Sarah</span>
+          <span className="text-primary">Albert</span>
           <span className="mx-4 text-primary/60">&</span>
-          <span className="text-primary">James</span>
+          <span className="text-primary">Ruby</span>
         </h1>
 
         {/* Heart divider */}
