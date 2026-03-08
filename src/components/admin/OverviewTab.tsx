@@ -33,25 +33,6 @@ export default function OverviewTab({ rsvps }: OverviewTabProps) {
         ))}
       </div>
 
-      {Object.keys(meals).length > 0 && (
-        <Card className="border-primary/10">
-          <CardHeader>
-            <CardTitle className="font-display text-lg flex items-center gap-2">
-              <Utensils className="h-5 w-5 text-primary" /> Meal Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {Object.entries(meals).map(([meal, count]) => (
-                <div key={meal} className="bg-muted rounded-lg p-3 text-center">
-                  <p className="font-semibold text-foreground">{count}</p>
-                  <p className="text-sm text-muted-foreground capitalize">{meal}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
