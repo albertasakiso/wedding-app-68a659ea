@@ -64,12 +64,14 @@ export default function Gifts() {
 
   const fetchGifts = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("payment-api", {
-        body: { action: "get-gifts" },
-      });
-      if (error) throw error;
-      setGifts(data.gifts || []);
-      setSettings(data.settings || null);
+      const [giftsRes, wallRes] = await Promise.all([
+        supabase.functions.invoke("payment-api", { body: { action: "get-gifts" } }),
+        supabase.from("gift_wall").select("id, donor_name, gift_type, message, created_at").order("created_at", { ascending: false }),
+      ]);
+      if (giftsRes.error) throw giftsRes.error;
+      setGifts(giftsRes.data.gifts || []);
+      setSettings(giftsRes.data.settings || null);
+      setGiftWall(wallRes.data || []);
     } catch {
       toast.error("Failed to load gifts");
     } finally {
