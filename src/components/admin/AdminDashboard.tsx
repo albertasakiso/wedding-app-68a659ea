@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard } from "lucide-react";
 import { adminApi, clearAdminToken } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -12,6 +12,8 @@ import GalleryTab from "./GalleryTab";
 import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
 import EmailListTab from "./EmailListTab";
+import GiftsTab from "./GiftsTab";
+import PaymentSettingsTab from "./PaymentSettingsTab";
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -40,7 +42,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [] } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,6 +64,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="venue" className="gap-2"><MapPin className="h-4 w-4" /> Venue</TabsTrigger>
             <TabsTrigger value="gallery" className="gap-2"><Image className="h-4 w-4" /> Gallery</TabsTrigger>
             <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
+            <TabsTrigger value="gifts" className="gap-2"><Gift className="h-4 w-4" /> Gifts</TabsTrigger>
+            <TabsTrigger value="payment-settings" className="gap-2"><CreditCard className="h-4 w-4" /> Payments</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
             <TabsTrigger value="email-list" className="gap-2"><Mail className="h-4 w-4" /> Email List</TabsTrigger>
           </TabsList>
@@ -72,6 +76,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="venue"><VenueTab venue={venue} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
+          <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="payment-settings"><PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>

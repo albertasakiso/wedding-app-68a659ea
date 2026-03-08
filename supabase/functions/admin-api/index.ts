@@ -61,13 +61,16 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos, siteSettings, emailList] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
           supabase.from("gallery_photos").select("*").order("created_at", { ascending: false }),
           supabase.from("site_settings").select("*").limit(1).single(),
           supabase.from("email_list").select("*").order("created_at", { ascending: false }),
+          supabase.from("gift_options").select("*").order("created_at", { ascending: true }),
+          supabase.from("gift_payments").select("*").order("created_at", { ascending: false }),
+          supabase.from("payment_settings").select("*").limit(1).single(),
         ]);
         return json({
           rsvps: rsvps.data || [],
@@ -76,6 +79,9 @@ Deno.serve(async (req) => {
           photos: photos.data || [],
           settings: siteSettings.data || null,
           email_list: emailList.data || [],
+          gift_options: giftOptions.data || [],
+          gift_payments: giftPayments.data || [],
+          payment_settings: paymentSettings.data || null,
         });
       }
 
@@ -175,6 +181,42 @@ Deno.serve(async (req) => {
       case "delete-subscriber": {
         const { error } = await supabase.from("email_list").delete().eq("id", params.id);
         if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "insert-gift": {
+        const { error } = await supabase.from("gift_options").insert({
+          title: params.title,
+          description: params.description || null,
+          target_amount: params.target_amount || 0,
+          image_url: params.image_url || null,
+        });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-gift": {
+        const { id, ...updates } = params;
+        const { error } = await supabase.from("gift_options").update(updates).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "delete-gift": {
+        const { error } = await supabase.from("gift_options").delete().eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-payment-settings": {
+        const { id, ...updates } = params;
+        if (id) {
+          const { error } = await supabase.from("payment_settings").update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+        } else {
+          const { error } = await supabase.from("payment_settings").insert(updates);
+          if (error) return json({ error: error.message }, 400);
+        }
         return json({ success: true });
       }
 

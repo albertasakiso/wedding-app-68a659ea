@@ -98,6 +98,128 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_options: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          target_amount: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          target_amount?: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          target_amount?: number
+          title?: string
+        }
+        Relationships: []
+      }
+      gift_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          donor_email: string | null
+          donor_name: string
+          donor_phone: string | null
+          gift_option_id: string
+          id: string
+          payment_method: string | null
+          payment_provider: string | null
+          payment_reference: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          donor_email?: string | null
+          donor_name: string
+          donor_phone?: string | null
+          gift_option_id: string
+          id?: string
+          payment_method?: string | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          donor_email?: string | null
+          donor_name?: string
+          donor_phone?: string | null
+          gift_option_id?: string
+          id?: string
+          payment_method?: string | null
+          payment_provider?: string | null
+          payment_reference?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_payments_gift_option_id_fkey"
+            columns: ["gift_option_id"]
+            isOneToOne: false
+            referencedRelation: "gift_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_settings: {
+        Row: {
+          bank_enabled: boolean
+          card_enabled: boolean
+          created_at: string
+          currency: string
+          id: string
+          momo_enabled: boolean
+          paystack_public_key: string | null
+          paystack_secret_key: string | null
+          stripe_public_key: string | null
+          stripe_secret_key: string | null
+        }
+        Insert: {
+          bank_enabled?: boolean
+          card_enabled?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          momo_enabled?: boolean
+          paystack_public_key?: string | null
+          paystack_secret_key?: string | null
+          stripe_public_key?: string | null
+          stripe_secret_key?: string | null
+        }
+        Update: {
+          bank_enabled?: boolean
+          card_enabled?: boolean
+          created_at?: string
+          currency?: string
+          id?: string
+          momo_enabled?: boolean
+          paystack_public_key?: string | null
+          paystack_secret_key?: string | null
+          stripe_public_key?: string | null
+          stripe_secret_key?: string | null
+        }
+        Relationships: []
+      }
       rsvps: {
         Row: {
           attending: boolean | null
