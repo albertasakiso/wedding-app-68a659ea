@@ -104,12 +104,41 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          couple_names: string
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          tagline: string | null
+          wedding_date: string
+        }
+        Insert: {
+          couple_names?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          tagline?: string | null
+          wedding_date?: string
+        }
+        Update: {
+          couple_names?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          tagline?: string | null
+          wedding_date?: string
+        }
+        Relationships: []
+      }
       venue_info: {
         Row: {
           address: string | null
           created_at: string
           hotels: Json | null
           id: string
+          latitude: number | null
+          longitude: number | null
           map_url: string | null
           name: string
           parking_info: string | null
@@ -119,6 +148,8 @@ export type Database = {
           created_at?: string
           hotels?: Json | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           map_url?: string | null
           name: string
           parking_info?: string | null
@@ -128,6 +159,8 @@ export type Database = {
           created_at?: string
           hotels?: Json | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           map_url?: string | null
           name?: string
           parking_info?: string | null

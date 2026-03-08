@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings } from "lucide-react";
 import { adminApi, clearAdminToken } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -10,6 +10,7 @@ import EventsTab from "./EventsTab";
 import VenueTab from "./VenueTab";
 import GalleryTab from "./GalleryTab";
 import MessagesTab from "./MessagesTab";
+import SettingsTab from "./SettingsTab";
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -38,7 +39,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [] } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -60,6 +61,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="venue" className="gap-2"><MapPin className="h-4 w-4" /> Venue</TabsTrigger>
             <TabsTrigger value="gallery" className="gap-2"><Image className="h-4 w-4" /> Gallery</TabsTrigger>
             <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview"><OverviewTab rsvps={rsvps} /></TabsContent>
@@ -68,6 +70,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="venue"><VenueTab venue={venue} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
+          <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>
       </main>
     </div>

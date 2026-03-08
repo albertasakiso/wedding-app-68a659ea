@@ -13,10 +13,8 @@ function json(data: unknown, status = 200) {
   });
 }
 
-// Simple token: hash of password + date prefix (rotates daily)
 function makeToken(password: string): string {
   const day = new Date().toISOString().slice(0, 10);
-  // Simple but sufficient for a wedding app
   let hash = 0;
   const str = password + day;
   for (let i = 0; i < str.length; i++) {
@@ -50,7 +48,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, token, ...params } = body;
 
-    // Login doesn't need token
     if (action === "login") {
       if (params.password === ADMIN_PASSWORD) {
         return json({ token: makeToken(ADMIN_PASSWORD) });
@@ -58,24 +55,25 @@ Deno.serve(async (req) => {
       return json({ error: "Invalid password" }, 401);
     }
 
-    // All other actions require valid token
     if (!verifyToken(token, ADMIN_PASSWORD)) {
       return json({ error: "Unauthorized" }, 401);
     }
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
           supabase.from("gallery_photos").select("*").order("created_at", { ascending: false }),
+          supabase.from("site_settings").select("*").limit(1).single(),
         ]);
         return json({
           rsvps: rsvps.data || [],
           events: events.data || [],
           venue: venue.data || null,
           photos: photos.data || [],
+          settings: siteSettings.data || null,
         });
       }
 
@@ -122,6 +120,18 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      case "update-settings": {
+        const { id, ...updates } = params;
+        if (id) {
+          const { error } = await supabase.from("site_settings").update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+        } else {
+          const { error } = await supabase.from("site_settings").insert(updates);
+          if (error) return json({ error: error.message }, 400);
+        }
+        return json({ success: true });
+      }
+
       case "insert-photo": {
         const { error } = await supabase.from("gallery_photos").insert({
           url: params.url,
@@ -133,7 +143,6 @@ Deno.serve(async (req) => {
       }
 
       case "delete-photo": {
-        // Delete from gallery_photos table
         const { data: photo } = await supabase
           .from("gallery_photos")
           .select("url")
@@ -141,7 +150,6 @@ Deno.serve(async (req) => {
           .single();
         
         if (photo?.url) {
-          // Try to delete from storage if it's a storage URL
           const urlParts = photo.url.split("/gallery/");
           if (urlParts.length > 1) {
             await supabase.storage.from("gallery").remove([urlParts[1]]);
