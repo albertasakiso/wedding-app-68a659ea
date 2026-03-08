@@ -33,9 +33,9 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
   };
 
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Attending", "Plus One", "Meal", "Dietary", "Message", "Date"];
+    const headers = ["Name", "Email", "Phone", "Attending", "Plus One", "Meal", "Dietary", "Message", "Date"];
     const rows = rsvps.map((r) => [
-      r.guest_name, r.email || "", r.attending ? "Yes" : "No",
+      r.guest_name, r.email || "", r.phone || "", r.attending ? "Yes" : "No",
       r.plus_one_name || "", r.meal_preference || "", r.dietary_restrictions || "",
       r.message || "", new Date(r.created_at).toLocaleDateString(),
     ]);
