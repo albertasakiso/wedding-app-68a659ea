@@ -14,6 +14,7 @@ import SettingsTab from "./SettingsTab";
 import EmailListTab from "./EmailListTab";
 import GiftsTab from "./GiftsTab";
 import PaymentSettingsTab from "./PaymentSettingsTab";
+import EmailSettingsTab from "./EmailSettingsTab";
 
 interface AdminDashboardProps {
   onLogout: () => void;
