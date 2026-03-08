@@ -64,6 +64,8 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="venue" className="gap-2"><MapPin className="h-4 w-4" /> Venue</TabsTrigger>
             <TabsTrigger value="gallery" className="gap-2"><Image className="h-4 w-4" /> Gallery</TabsTrigger>
             <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
+            <TabsTrigger value="gifts" className="gap-2"><Gift className="h-4 w-4" /> Gifts</TabsTrigger>
+            <TabsTrigger value="payment-settings" className="gap-2"><CreditCard className="h-4 w-4" /> Payments</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
             <TabsTrigger value="email-list" className="gap-2"><Mail className="h-4 w-4" /> Email List</TabsTrigger>
           </TabsList>
