@@ -234,6 +234,29 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      case "insert-gift-wall": {
+        const { error } = await supabase.from("gift_wall").insert({
+          donor_name: params.donor_name,
+          gift_type: params.gift_type || "kind",
+          message: params.message || null,
+        });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "update-gift-wall": {
+        const { id, ...updates } = params;
+        const { error } = await supabase.from("gift_wall").update(updates).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "delete-gift-wall": {
+        const { error } = await supabase.from("gift_wall").delete().eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
