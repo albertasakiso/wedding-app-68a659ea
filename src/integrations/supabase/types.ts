@@ -14,7 +14,126 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_time: string
+          id: string
+          location: string | null
+          order_index: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_time: string
+          id?: string
+          location?: string | null
+          order_index?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_time?: string
+          id?: string
+          location?: string | null
+          order_index?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      gallery_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          uploaded_by: string | null
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          uploaded_by?: string | null
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          uploaded_by?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
+      rsvps: {
+        Row: {
+          attending: boolean | null
+          created_at: string
+          dietary_restrictions: string | null
+          email: string | null
+          guest_name: string
+          id: string
+          meal_preference: string | null
+          message: string | null
+          plus_one_name: string | null
+        }
+        Insert: {
+          attending?: boolean | null
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          guest_name: string
+          id?: string
+          meal_preference?: string | null
+          message?: string | null
+          plus_one_name?: string | null
+        }
+        Update: {
+          attending?: boolean | null
+          created_at?: string
+          dietary_restrictions?: string | null
+          email?: string | null
+          guest_name?: string
+          id?: string
+          meal_preference?: string | null
+          message?: string | null
+          plus_one_name?: string | null
+        }
+        Relationships: []
+      }
+      venue_info: {
+        Row: {
+          address: string | null
+          created_at: string
+          hotels: Json | null
+          id: string
+          map_url: string | null
+          name: string
+          parking_info: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          hotels?: Json | null
+          id?: string
+          map_url?: string | null
+          name: string
+          parking_info?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          hotels?: Json | null
+          id?: string
+          map_url?: string | null
+          name?: string
+          parking_info?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
