@@ -47,6 +47,7 @@ interface PaymentSettings {
 export default function Gifts() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [gifts, setGifts] = useState<GiftOption[]>([]);
+  const [giftWall, setGiftWall] = useState<GiftWallEntry[]>([]);
   const [settings, setSettings] = useState<PaymentSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGift, setSelectedGift] = useState<GiftOption | null>(null);
