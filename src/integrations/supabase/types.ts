@@ -217,6 +217,33 @@ export type Database = {
           },
         ]
       }
+      gift_wall: {
+        Row: {
+          created_at: string
+          donor_name: string
+          gift_type: string
+          id: string
+          is_visible: boolean
+          message: string | null
+        }
+        Insert: {
+          created_at?: string
+          donor_name: string
+          gift_type?: string
+          id?: string
+          is_visible?: boolean
+          message?: string | null
+        }
+        Update: {
+          created_at?: string
+          donor_name?: string
+          gift_type?: string
+          id?: string
+          is_visible?: boolean
+          message?: string | null
+        }
+        Relationships: []
+      }
       payment_settings: {
         Row: {
           bank_enabled: boolean
