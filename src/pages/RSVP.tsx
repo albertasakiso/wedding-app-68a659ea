@@ -75,8 +75,6 @@ const RSVP = () => {
         phone: data.phone || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
-        meal_preference: data.attending ? data.meal_preference : null,
-        dietary_restrictions: data.attending ? data.dietary_restrictions : null,
         message: data.message,
       });
 
