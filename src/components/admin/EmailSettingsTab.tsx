@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { adminApi } from "@/lib/admin-api";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { Mail, Save, Loader2 } from "lucide-react";
 
 interface EmailSettingsTabProps {
@@ -21,6 +22,8 @@ export default function EmailSettingsTab({ settings, onRefresh }: EmailSettingsT
     sender_email: settings?.sender_email || "",
     rsvp_notification_enabled: settings?.rsvp_notification_enabled ?? true,
     gift_notification_enabled: settings?.gift_notification_enabled ?? true,
+    gift_thankyou_subject: settings?.gift_thankyou_subject || "Thank You for Your Gift! — Albert & Ruby",
+    gift_thankyou_message: settings?.gift_thankyou_message || "Your generous contribution means the world to us. We truly appreciate your love and support as we begin this new chapter together.",
   });
 
   const handleSave = async () => {
@@ -104,6 +107,35 @@ export default function EmailSettingsTab({ settings, onRefresh }: EmailSettingsT
               checked={form.gift_notification_enabled}
               onCheckedChange={(v) => setForm({ ...form, gift_notification_enabled: v })}
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Gift Thank-You Email</CardTitle>
+          <CardDescription>Customize the thank-you email sent to donors after a gift</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Subject Line</Label>
+            <Input
+              value={form.gift_thankyou_subject}
+              onChange={(e) => setForm({ ...form, gift_thankyou_subject: e.target.value })}
+              placeholder="Thank You for Your Gift!"
+            />
+          </div>
+          <div>
+            <Label>Message Body</Label>
+            <Textarea
+              value={form.gift_thankyou_message}
+              onChange={(e) => setForm({ ...form, gift_thankyou_message: e.target.value })}
+              placeholder="Your generous contribution means the world to us..."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Available variables: <code>{"{donor_name}"}</code>, <code>{"{amount}"}</code>, <code>{"{currency}"}</code>, <code>{"{gift_title}"}</code>
+            </p>
           </div>
         </CardContent>
       </Card>

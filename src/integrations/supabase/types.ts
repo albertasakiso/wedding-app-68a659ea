@@ -49,6 +49,8 @@ export type Database = {
           admin_email: string | null
           created_at: string
           gift_notification_enabled: boolean
+          gift_thankyou_message: string
+          gift_thankyou_subject: string
           id: string
           rsvp_notification_enabled: boolean
           sender_email: string | null
@@ -58,6 +60,8 @@ export type Database = {
           admin_email?: string | null
           created_at?: string
           gift_notification_enabled?: boolean
+          gift_thankyou_message?: string
+          gift_thankyou_subject?: string
           id?: string
           rsvp_notification_enabled?: boolean
           sender_email?: string | null
@@ -67,6 +71,8 @@ export type Database = {
           admin_email?: string | null
           created_at?: string
           gift_notification_enabled?: boolean
+          gift_thankyou_message?: string
+          gift_thankyou_subject?: string
           id?: string
           rsvp_notification_enabled?: boolean
           sender_email?: string | null
