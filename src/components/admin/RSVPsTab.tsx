@@ -33,9 +33,9 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
   };
 
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Attending", "Plus One", "Meal", "Dietary", "Message", "Date"];
+    const headers = ["Name", "Email", "Phone", "Attending", "Plus One", "Meal", "Dietary", "Message", "Date"];
     const rows = rsvps.map((r) => [
-      r.guest_name, r.email || "", r.attending ? "Yes" : "No",
+      r.guest_name, r.email || "", r.phone || "", r.attending ? "Yes" : "No",
       r.plus_one_name || "", r.meal_preference || "", r.dietary_restrictions || "",
       r.message || "", new Date(r.created_at).toLocaleDateString(),
     ]);
@@ -71,6 +71,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
             <TableRow className="bg-muted/50">
               <TableHead>Guest</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Plus One</TableHead>
               <TableHead>Meal</TableHead>
@@ -81,7 +82,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   No RSVPs found
                 </TableCell>
               </TableRow>
@@ -90,6 +91,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{r.guest_name}</TableCell>
                   <TableCell className="text-muted-foreground">{r.email || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{r.phone || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={r.attending ? "default" : "destructive"}>
                       {r.attending ? "Attending" : "Declined"}

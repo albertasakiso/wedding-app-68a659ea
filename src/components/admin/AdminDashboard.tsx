@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail } from "lucide-react";
 import { adminApi, clearAdminToken } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -11,6 +11,7 @@ import VenueTab from "./VenueTab";
 import GalleryTab from "./GalleryTab";
 import MessagesTab from "./MessagesTab";
 import SettingsTab from "./SettingsTab";
+import EmailListTab from "./EmailListTab";
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -39,7 +40,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [] } = data || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -62,6 +63,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <TabsTrigger value="gallery" className="gap-2"><Image className="h-4 w-4" /> Gallery</TabsTrigger>
             <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
             <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
+            <TabsTrigger value="email-list" className="gap-2"><Mail className="h-4 w-4" /> Email List</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview"><OverviewTab rsvps={rsvps} /></TabsContent>
@@ -71,6 +73,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
           <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
           <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
+          <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
         </Tabs>
       </main>
     </div>

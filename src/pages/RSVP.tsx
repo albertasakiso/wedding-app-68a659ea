@@ -33,12 +33,14 @@ import {
 const rsvpSchema = z.object({
   guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Please enter a valid email").max(255, "Email must be less than 255 characters"),
+  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional(),
   attending: z.boolean(),
   has_plus_one: z.boolean(),
   plus_one_name: z.string().trim().max(100, "Name must be less than 100 characters").optional(),
   meal_preference: z.string().optional(),
   dietary_restrictions: z.string().trim().max(500, "Please keep dietary restrictions under 500 characters").optional(),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
+  receive_photos: z.boolean(),
 });
 
 type RSVPFormData = z.infer<typeof rsvpSchema>;
@@ -53,12 +55,14 @@ const RSVP = () => {
     defaultValues: {
       guest_name: "",
       email: "",
+      phone: "",
       attending: true,
       has_plus_one: false,
       plus_one_name: "",
       meal_preference: "",
       dietary_restrictions: "",
       message: "",
+      receive_photos: true,
     },
   });
 
@@ -72,6 +76,7 @@ const RSVP = () => {
       const { error } = await supabase.from("rsvps").insert({
         guest_name: data.guest_name,
         email: data.email,
+        phone: data.phone || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
         meal_preference: data.attending ? data.meal_preference : null,
@@ -80,6 +85,14 @@ const RSVP = () => {
       });
 
       if (error) throw error;
+
+      // Add to email list if opted in
+      if (data.receive_photos && data.email) {
+        await supabase.from("email_list").upsert(
+          { name: data.guest_name, email: data.email, phone: data.phone || null, source: "rsvp" },
+          { onConflict: "email" }
+        );
+      }
 
       setIsSubmitted(true);
       toast.success("RSVP submitted successfully!");
@@ -184,7 +197,25 @@ const RSVP = () => {
                   )}
                 />
 
-                {/* Attendance */}
+                {/* Phone */}
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-display text-lg">Phone Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="+233 XX XXX XXXX"
+                          className="border-primary/20 focus:border-primary"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="attending"
@@ -321,6 +352,30 @@ const RSVP = () => {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Receive Photos Opt-in */}
+                <FormField
+                  control={form.control}
+                  name="receive_photos"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-body cursor-pointer">
+                          I'd like to receive photos from the event
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          We'll add you to our email list to share pictures after the celebration.
+                        </p>
+                      </div>
                     </FormItem>
                   )}
                 />
