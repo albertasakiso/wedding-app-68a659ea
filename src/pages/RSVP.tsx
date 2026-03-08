@@ -296,50 +296,7 @@ const RSVP = () => {
                       />
                     )}
 
-                    {/* Meal Preference */}
-                    <FormField
-                      control={form.control}
-                      name="meal_preference"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-display text-lg">Meal Preference</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="border-primary/20 focus:border-primary">
-                                <SelectValue placeholder="Select your meal preference" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="beef">Filet Mignon</SelectItem>
-                              <SelectItem value="chicken">Herb-Roasted Chicken</SelectItem>
-                              <SelectItem value="fish">Pan-Seared Salmon</SelectItem>
-                              <SelectItem value="vegetarian">Vegetarian Option</SelectItem>
-                              <SelectItem value="vegan">Vegan Option</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
-                    {/* Dietary Restrictions */}
-                    <FormField
-                      control={form.control}
-                      name="dietary_restrictions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-display text-lg">Dietary Restrictions</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Allergies, dietary needs, etc."
-                              className="border-primary/20 focus:border-primary"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </>
                 )}
 
