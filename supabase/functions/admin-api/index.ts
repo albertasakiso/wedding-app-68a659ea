@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings, emailSettings] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings, emailList, giftOptions, giftPayments, paymentSettings, emailSettings, giftWall] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
           supabase.from("gift_payments").select("*").order("created_at", { ascending: false }),
           supabase.from("payment_settings").select("*").limit(1).single(),
           supabase.from("email_settings").select("*").limit(1).single(),
+          supabase.from("gift_wall").select("*").order("created_at", { ascending: false }),
         ]);
         return json({
           rsvps: rsvps.data || [],
@@ -84,6 +85,7 @@ Deno.serve(async (req) => {
           gift_payments: giftPayments.data || [],
           payment_settings: paymentSettings.data || null,
           email_settings: emailSettings.data || null,
+          gift_wall: giftWall.data || [],
         });
       }
 
