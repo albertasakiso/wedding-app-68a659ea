@@ -128,17 +128,30 @@ Deno.serve(async (req) => {
         if (!settings?.gift_notification_enabled) return json({ skipped: true });
         if (!params.donor_email) return json({ skipped: true, reason: "no email" });
 
+        const customSubject = (settings?.gift_thankyou_subject || "Thank You for Your Gift! — Albert & Ruby")
+          .replace(/\{donor_name\}/g, params.donor_name)
+          .replace(/\{amount\}/g, params.amount)
+          .replace(/\{currency\}/g, params.currency)
+          .replace(/\{gift_title\}/g, params.gift_title);
+
+        const customMessage = (settings?.gift_thankyou_message || "Your generous contribution means the world to us. We truly appreciate your love and support as we begin this new chapter together.")
+          .replace(/\{donor_name\}/g, params.donor_name)
+          .replace(/\{amount\}/g, params.amount)
+          .replace(/\{currency\}/g, params.currency)
+          .replace(/\{gift_title\}/g, params.gift_title);
+
         const html = wrapHtml(`
           <h1 style="color:#8B7355;font-size:28px;text-align:center;margin-bottom:20px;">Thank You, ${params.donor_name}!</h1>
           <p style="color:#555;font-size:16px;line-height:1.6;text-align:center;">
-            Your generous contribution of <strong>${params.currency} ${params.amount}</strong> towards <strong>${params.gift_title}</strong> means the world to us.
+            ${customMessage} 💕
           </p>
-          <p style="color:#555;font-size:16px;line-height:1.6;text-align:center;">
-            We truly appreciate your love and support as we begin this new chapter together. 💕
-          </p>
+          <div style="background:#faf8f5;border-radius:8px;padding:20px;margin:20px 0;">
+            <p style="color:#8B7355;font-size:14px;margin:0;"><strong>Gift:</strong> ${params.gift_title}</p>
+            <p style="color:#8B7355;font-size:14px;margin:8px 0 0;"><strong>Amount:</strong> ${params.currency} ${params.amount}</p>
+          </div>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: params.donor_email, name: params.donor_name }, "Thank You for Your Gift! — Albert & Ruby", html, sender);
+        await sendBrevoEmail(BREVO_API_KEY, { email: params.donor_email, name: params.donor_name }, customSubject, html, sender);
         return json({ sent: true });
       }
 

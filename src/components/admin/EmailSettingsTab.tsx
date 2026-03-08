@@ -111,6 +111,35 @@ export default function EmailSettingsTab({ settings, onRefresh }: EmailSettingsT
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Gift Thank-You Email</CardTitle>
+          <CardDescription>Customize the thank-you email sent to donors after a gift</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Subject Line</Label>
+            <Input
+              value={form.gift_thankyou_subject}
+              onChange={(e) => setForm({ ...form, gift_thankyou_subject: e.target.value })}
+              placeholder="Thank You for Your Gift!"
+            />
+          </div>
+          <div>
+            <Label>Message Body</Label>
+            <Textarea
+              value={form.gift_thankyou_message}
+              onChange={(e) => setForm({ ...form, gift_thankyou_message: e.target.value })}
+              placeholder="Your generous contribution means the world to us..."
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Available variables: <code>{"{donor_name}"}</code>, <code>{"{amount}"}</code>, <code>{"{currency}"}</code>, <code>{"{gift_title}"}</code>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Button onClick={handleSave} disabled={saving} className="gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Save Email Settings
