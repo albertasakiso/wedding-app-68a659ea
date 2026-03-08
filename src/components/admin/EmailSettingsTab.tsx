@@ -21,6 +21,8 @@ export default function EmailSettingsTab({ settings, onRefresh }: EmailSettingsT
     sender_email: settings?.sender_email || "",
     rsvp_notification_enabled: settings?.rsvp_notification_enabled ?? true,
     gift_notification_enabled: settings?.gift_notification_enabled ?? true,
+    gift_thankyou_subject: settings?.gift_thankyou_subject || "Thank You for Your Gift! — Albert & Ruby",
+    gift_thankyou_message: settings?.gift_thankyou_message || "Your generous contribution means the world to us. We truly appreciate your love and support as we begin this new chapter together.",
   });
 
   const handleSave = async () => {
