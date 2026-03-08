@@ -55,12 +55,14 @@ const RSVP = () => {
     defaultValues: {
       guest_name: "",
       email: "",
+      phone: "",
       attending: true,
       has_plus_one: false,
       plus_one_name: "",
       meal_preference: "",
       dietary_restrictions: "",
       message: "",
+      receive_photos: true,
     },
   });
 
