@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_settings: {
+        Row: {
+          admin_email: string | null
+          created_at: string
+          gift_notification_enabled: boolean
+          id: string
+          rsvp_notification_enabled: boolean
+          sender_email: string | null
+          sender_name: string
+        }
+        Insert: {
+          admin_email?: string | null
+          created_at?: string
+          gift_notification_enabled?: boolean
+          id?: string
+          rsvp_notification_enabled?: boolean
+          sender_email?: string | null
+          sender_name?: string
+        }
+        Update: {
+          admin_email?: string | null
+          created_at?: string
+          gift_notification_enabled?: boolean
+          id?: string
+          rsvp_notification_enabled?: boolean
+          sender_email?: string | null
+          sender_name?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
