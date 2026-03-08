@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_list: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          source: string | null
+          subscribed: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          source?: string | null
+          subscribed?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          source?: string | null
+          subscribed?: boolean
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           created_at: string
@@ -78,6 +108,7 @@ export type Database = {
           id: string
           meal_preference: string | null
           message: string | null
+          phone: string | null
           plus_one_name: string | null
         }
         Insert: {
@@ -89,6 +120,7 @@ export type Database = {
           id?: string
           meal_preference?: string | null
           message?: string | null
+          phone?: string | null
           plus_one_name?: string | null
         }
         Update: {
@@ -100,6 +132,7 @@ export type Database = {
           id?: string
           meal_preference?: string | null
           message?: string | null
+          phone?: string | null
           plus_one_name?: string | null
         }
         Relationships: []
