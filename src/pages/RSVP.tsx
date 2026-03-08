@@ -33,12 +33,14 @@ import {
 const rsvpSchema = z.object({
   guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
   email: z.string().trim().email("Please enter a valid email").max(255, "Email must be less than 255 characters"),
+  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional(),
   attending: z.boolean(),
   has_plus_one: z.boolean(),
   plus_one_name: z.string().trim().max(100, "Name must be less than 100 characters").optional(),
   meal_preference: z.string().optional(),
   dietary_restrictions: z.string().trim().max(500, "Please keep dietary restrictions under 500 characters").optional(),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
+  receive_photos: z.boolean(),
 });
 
 type RSVPFormData = z.infer<typeof rsvpSchema>;
