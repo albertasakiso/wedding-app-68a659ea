@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
-const WEDDING_DATE = new Date("2026-05-02T15:00:00");
+interface SiteSettings {
+  couple_names: string;
+  wedding_date: string;
+  tagline: string;
+}
 
 interface TimeLeft {
   days: number;
@@ -14,12 +19,36 @@ interface TimeLeft {
 
 const Hero = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [settings, setSettings] = useState<SiteSettings>({
+    couple_names: "Albert & Ruby",
+    wedding_date: "2026-05-02T15:00:00Z",
+    tagline: "Together with their families",
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("couple_names, wedding_date, tagline")
+        .limit(1)
+        .single();
+      if (data) setSettings(data);
+    };
+    fetchSettings();
+  }, []);
+
+  const weddingDate = new Date(settings.wedding_date);
+  const names = settings.couple_names.split("&").map((n) => n.trim());
+  const dateStr = weddingDate.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date();
-      const difference = WEDDING_DATE.getTime() - now.getTime();
-
+      const difference = weddingDate.getTime() - now.getTime();
       if (difference > 0) {
         setTimeLeft({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -29,11 +58,10 @@ const Hero = () => {
         });
       }
     };
-
     calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [settings.wedding_date]);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -53,31 +81,27 @@ const Hero = () => {
       <div className="absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        {/* Pre-title */}
         <p className="text-muted-foreground text-lg md:text-xl font-body tracking-[0.3em] uppercase mb-6 animate-fade-in">
-          Together with their families
+          {settings.tagline}
         </p>
 
-        {/* Names */}
         <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-4 animate-slide-up">
-          <span className="text-primary">Albert</span>
+          <span className="text-primary">{names[0] || "Albert"}</span>
           <span className="mx-4 text-primary/60">&</span>
-          <span className="text-primary">Ruby</span>
+          <span className="text-primary">{names[1] || "Ruby"}</span>
         </h1>
 
-        {/* Heart divider */}
         <div className="flex items-center justify-center gap-4 my-8 animate-fade-in" style={{ animationDelay: "0.3s" }}>
           <div className="h-px w-16 md:w-24 bg-gradient-to-r from-transparent to-primary/50" />
           <Heart className="w-6 h-6 text-primary fill-primary/20" />
           <div className="h-px w-16 md:w-24 bg-gradient-to-l from-transparent to-primary/50" />
         </div>
 
-        {/* Date announcement */}
         <p className="font-display text-2xl md:text-3xl text-foreground/80 mb-2 animate-fade-in" style={{ animationDelay: "0.4s" }}>
           Request the pleasure of your company
         </p>
         <p className="font-display text-3xl md:text-4xl text-primary mb-12 animate-fade-in" style={{ animationDelay: "0.5s" }}>
-          May 2nd, 2026
+          {dateStr}
         </p>
 
         {/* Countdown */}
@@ -101,7 +125,6 @@ const Hero = () => {
           ))}
         </div>
 
-        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.8s" }}>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-display shadow-elegant">
             <Link to="/rsvp">RSVP Now</Link>
@@ -117,7 +140,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
         <div className="w-6 h-10 border-2 border-primary/30 rounded-full flex justify-center">
           <div className="w-1.5 h-3 bg-primary/50 rounded-full mt-2 animate-pulse" />
