@@ -76,6 +76,7 @@ const RSVP = () => {
       const { error } = await supabase.from("rsvps").insert({
         guest_name: data.guest_name,
         email: data.email,
+        phone: data.phone || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
         meal_preference: data.attending ? data.meal_preference : null,
@@ -84,6 +85,14 @@ const RSVP = () => {
       });
 
       if (error) throw error;
+
+      // Add to email list if opted in
+      if (data.receive_photos && data.email) {
+        await supabase.from("email_list").upsert(
+          { name: data.guest_name, email: data.email, phone: data.phone || null, source: "rsvp" },
+          { onConflict: "email" }
+        );
+      }
 
       setIsSubmitted(true);
       toast.success("RSVP submitted successfully!");
