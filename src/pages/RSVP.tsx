@@ -356,6 +356,30 @@ const RSVP = () => {
                   )}
                 />
 
+                {/* Receive Photos Opt-in */}
+                <FormField
+                  control={form.control}
+                  name="receive_photos"
+                  render={({ field }) => (
+                    <FormItem className="flex items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="font-body cursor-pointer">
+                          I'd like to receive photos from the event
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          We'll add you to our email list to share pictures after the celebration.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
                 {/* Submit */}
                 <Button
                   type="submit"
