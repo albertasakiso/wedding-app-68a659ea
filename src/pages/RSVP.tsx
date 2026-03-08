@@ -197,7 +197,25 @@ const RSVP = () => {
                   )}
                 />
 
-                {/* Attendance */}
+                {/* Phone */}
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-display text-lg">Phone Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="+233 XX XXX XXXX"
+                          className="border-primary/20 focus:border-primary"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="attending"
