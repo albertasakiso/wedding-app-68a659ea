@@ -61,12 +61,13 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "get-dashboard": {
-        const [rsvps, events, venue, photos, siteSettings] = await Promise.all([
+        const [rsvps, events, venue, photos, siteSettings, emailList] = await Promise.all([
           supabase.from("rsvps").select("*").order("created_at", { ascending: false }),
           supabase.from("events").select("*").order("order_index", { ascending: true }),
           supabase.from("venue_info").select("*").limit(1).single(),
           supabase.from("gallery_photos").select("*").order("created_at", { ascending: false }),
           supabase.from("site_settings").select("*").limit(1).single(),
+          supabase.from("email_list").select("*").order("created_at", { ascending: false }),
         ]);
         return json({
           rsvps: rsvps.data || [],
@@ -74,6 +75,7 @@ Deno.serve(async (req) => {
           venue: venue.data || null,
           photos: photos.data || [],
           settings: siteSettings.data || null,
+          email_list: emailList.data || [],
         });
       }
 
