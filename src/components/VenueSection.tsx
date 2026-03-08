@@ -50,7 +50,7 @@ const VenueSection = () => {
           address: data.address,
           map_url: data.map_url,
           parking_info: data.parking_info,
-          hotels: (data.hotels as Hotel[]) || [],
+          hotels: (data.hotels as unknown as Hotel[]) || [],
           latitude: (data as any).latitude,
           longitude: (data as any).longitude,
         });
