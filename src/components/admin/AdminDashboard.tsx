@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell } from "lucide-react";
 import { adminApi, clearAdminToken } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
