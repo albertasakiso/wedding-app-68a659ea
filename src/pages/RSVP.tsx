@@ -94,6 +94,18 @@ const RSVP = () => {
         );
       }
 
+      // Send email notifications (fire-and-forget)
+      const emailPayload = {
+        guest_name: data.guest_name,
+        guest_email: data.email,
+        attending: data.attending,
+        plus_one_name: data.has_plus_one ? data.plus_one_name : null,
+        meal_preference: data.meal_preference,
+        message: data.message,
+      };
+      supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-confirmation", ...emailPayload } }).catch(() => {});
+      supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-admin-alert", ...emailPayload } }).catch(() => {});
+
       setIsSubmitted(true);
       toast.success("RSVP submitted successfully!");
     } catch (error) {
