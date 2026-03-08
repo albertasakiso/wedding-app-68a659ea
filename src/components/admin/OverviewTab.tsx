@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, UserX, Utensils, Heart } from "lucide-react";
+import { Users, UserCheck, UserX, Heart } from "lucide-react";
 
 interface OverviewTabProps {
   rsvps: any[];
