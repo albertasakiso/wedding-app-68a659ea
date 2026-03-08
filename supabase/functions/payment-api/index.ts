@@ -265,6 +265,16 @@ Deno.serve(async (req) => {
             .from("gift_payments")
             .update({ status, payment_reference: session.id })
             .eq("id", paymentId);
+
+          // Send email notifications on success
+          if (status === "completed") {
+            const { data: paymentRec } = await supabase.from("gift_payments").select("*, gift_options(title)").eq("id", paymentId).single();
+            if (paymentRec) {
+              const emailBase = { donor_name: paymentRec.donor_name, donor_email: paymentRec.donor_email, amount: paymentRec.amount, currency: paymentRec.currency, gift_title: paymentRec.gift_options?.title || "Gift", payment_provider: "stripe" };
+              fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-thankyou", ...emailBase }) }).catch(() => {});
+              fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/email-notifications`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` }, body: JSON.stringify({ action: "send-gift-admin-alert", ...emailBase }) }).catch(() => {});
+            }
+          }
         }
 
         return json({ status, verified: status === "completed" });
