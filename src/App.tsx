@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import RSVP from "./pages/RSVP";
 import Gallery from "./pages/Gallery";
+import Gifts from "./pages/Gifts";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
