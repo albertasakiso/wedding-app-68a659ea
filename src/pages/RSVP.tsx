@@ -37,8 +37,6 @@ const rsvpSchema = z.object({
   attending: z.boolean(),
   has_plus_one: z.boolean(),
   plus_one_name: z.string().trim().max(100, "Name must be less than 100 characters").optional(),
-  meal_preference: z.string().optional(),
-  dietary_restrictions: z.string().trim().max(500, "Please keep dietary restrictions under 500 characters").optional(),
   message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
   receive_photos: z.boolean(),
 });
