@@ -9,7 +9,7 @@ const Footer = () => {
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-6">
             <Heart className="w-6 h-6 text-primary fill-primary/20" />
-            <span className="font-display text-2xl text-foreground">Sarah & James</span>
+            <span className="font-display text-2xl text-foreground">Albert & Ruby</span>
           </div>
 
           {/* Date */}

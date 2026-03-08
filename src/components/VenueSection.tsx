@@ -87,7 +87,7 @@ const VenueSection = () => {
                 <h3 className="font-display text-xl text-foreground">Nearby Accommodations</h3>
               </div>
               <p className="text-muted-foreground font-body mb-4">
-                We've arranged special rates at these nearby hotels. Mention "Sarah & James Wedding" when booking.
+                We've arranged special rates at these nearby hotels. Mention "Albert & Ruby Wedding" when booking.
               </p>
               <div className="space-y-3">
                 {hotels.map((hotel) => (
