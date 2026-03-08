@@ -163,6 +163,21 @@ Deno.serve(async (req) => {
         return json({ success: true });
       }
 
+      case "add-subscriber": {
+        const { error } = await supabase.from("email_list").upsert(
+          { name: params.name, email: params.email, phone: params.phone || null, source: params.source || "manual" },
+          { onConflict: "email" }
+        );
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
+      case "delete-subscriber": {
+        const { error } = await supabase.from("email_list").delete().eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }
