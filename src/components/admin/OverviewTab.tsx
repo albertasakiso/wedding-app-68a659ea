@@ -10,12 +10,6 @@ export default function OverviewTab({ rsvps }: OverviewTabProps) {
   const attending = rsvps.filter((r) => r.attending).length;
   const declined = rsvps.filter((r) => !r.attending).length;
   const plusOnes = rsvps.filter((r) => r.plus_one_name).length;
-  const meals: Record<string, number> = {};
-  rsvps.forEach((r) => {
-    if (r.meal_preference) {
-      meals[r.meal_preference] = (meals[r.meal_preference] || 0) + 1;
-    }
-  });
 
   const stats = [
     { label: "Total RSVPs", value: total, icon: Users, color: "text-primary" },
