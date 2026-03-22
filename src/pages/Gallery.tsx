@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Camera, ArrowLeft, X } from "lucide-react";
+import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Photo {
   id: string;
@@ -16,19 +19,14 @@ interface Photo {
 const Gallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchPhotos();
-  }, []);
-
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("gallery_photos")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       setPhotos(data || []);
     } catch (error) {
@@ -36,19 +34,37 @@ const Gallery = () => {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchPhotos();
+
+    const channel = supabase
+      .channel("gallery-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "gallery_photos" }, () => fetchPhotos())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchPhotos]);
+
+  const navigatePhoto = (direction: number) => {
+    if (selectedIndex === null) return;
+    const next = selectedIndex + direction;
+    if (next >= 0 && next < photos.length) setSelectedIndex(next);
   };
 
-  // Placeholder images for now
-  const placeholderPhotos = [
-    { id: "1", caption: "Engagement Day" },
-    { id: "2", caption: "Our First Date" },
-    { id: "3", caption: "The Proposal" },
-    { id: "4", caption: "Together Forever" },
-    { id: "5", caption: "Adventures" },
-    { id: "6", caption: "Love Story" },
-    { id: "7", caption: "Memories" },
-    { id: "8", caption: "Journey" },
-  ];
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (selectedIndex === null) return;
+      if (e.key === "Escape") setSelectedIndex(null);
+      if (e.key === "ArrowLeft") navigatePhoto(-1);
+      if (e.key === "ArrowRight") navigatePhoto(1);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selectedIndex, photos.length]);
+
+  const selectedPhoto = selectedIndex !== null ? photos[selectedIndex] : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -75,48 +91,83 @@ const Gallery = () => {
             </p>
           </div>
 
-          {/* Gallery Grid */}
           {loading ? (
             <div className="text-center py-20">
               <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
               <p className="text-muted-foreground font-body">Loading gallery...</p>
             </div>
           ) : photos.length > 0 ? (
-            <div className="columns-2 md:columns-3 lg:columns-4 gap-4 max-w-6xl mx-auto">
-              {photos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="break-inside-avoid mb-4 cursor-pointer group"
-                  onClick={() => setSelectedPhoto(photo)}
-                >
-                  <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all">
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || "Wedding photo"}
-                      className="w-full h-auto group-hover:scale-105 transition-transform duration-300"
-                    />
-                    {photo.caption && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                        <p className="text-white font-body text-sm">{photo.caption}</p>
-                      </div>
-                    )}
+            <>
+              {/* Carousel */}
+              <div className="max-w-4xl mx-auto mb-12">
+                <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                  <CarouselContent>
+                    {photos.map((photo, idx) => (
+                      <CarouselItem key={photo.id} className="basis-full md:basis-1/2 lg:basis-1/3">
+                        <div
+                          className="cursor-pointer group relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all aspect-square"
+                          onClick={() => setSelectedIndex(idx)}
+                        >
+                          <img
+                            src={photo.url}
+                            alt={photo.caption || "Wedding photo"}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                          {photo.caption && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                              <p className="text-white font-body text-sm">{photo.caption}</p>
+                            </div>
+                          )}
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious className="-left-4" />
+                  <CarouselNext className="-right-4" />
+                </Carousel>
+              </div>
+
+              {/* Grid below */}
+              <div className="columns-2 md:columns-3 lg:columns-4 gap-4 max-w-6xl mx-auto">
+                {photos.map((photo, idx) => (
+                  <div
+                    key={photo.id}
+                    className="break-inside-avoid mb-4 cursor-pointer group"
+                    onClick={() => setSelectedIndex(idx)}
+                  >
+                    <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all">
+                      <img
+                        src={photo.url}
+                        alt={photo.caption || "Wedding photo"}
+                        className="w-full h-auto group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      {photo.caption && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                          <p className="text-white font-body text-sm">{photo.caption}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {placeholderPhotos.map((photo, index) => (
+                {[
+                  "Engagement Day", "Our First Date", "The Proposal", "Together Forever",
+                  "Adventures", "Love Story", "Memories", "Journey",
+                ].map((caption, index) => (
                   <div
-                    key={photo.id}
+                    key={index}
                     className="aspect-square rounded-xl bg-gradient-to-br from-champagne to-cream border border-primary/20 overflow-hidden shadow-soft hover:shadow-elegant transition-all hover:scale-[1.02] cursor-pointer"
-                    style={{ animationDelay: `${index * 0.1}s` }}
                   >
                     <div className="w-full h-full flex items-center justify-center bg-primary/5">
                       <div className="text-center p-4">
                         <Camera className="w-8 h-8 text-primary/40 mx-auto mb-2" />
-                        <p className="text-sm text-muted-foreground font-body">{photo.caption}</p>
+                        <p className="text-sm text-muted-foreground font-body">{caption}</p>
                       </div>
                     </div>
                   </div>
@@ -132,31 +183,62 @@ const Gallery = () => {
         </div>
       </main>
 
-      {/* Lightbox */}
+      {/* Lightbox Modal with Prev/Next */}
       {selectedPhoto && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
+          onClick={() => setSelectedIndex(null)}
         >
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 text-white hover:bg-white/10"
-            onClick={() => setSelectedPhoto(null)}
+            className="absolute top-4 right-4 text-white hover:bg-white/10 z-10"
+            onClick={() => setSelectedIndex(null)}
           >
             <X className="w-6 h-6" />
           </Button>
+
+          {/* Previous */}
+          {selectedIndex! > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 z-10"
+              onClick={(e) => { e.stopPropagation(); navigatePhoto(-1); }}
+            >
+              <ChevronLeft className="w-8 h-8" />
+            </Button>
+          )}
+
+          {/* Next */}
+          {selectedIndex! < photos.length - 1 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/10 z-10"
+              onClick={(e) => { e.stopPropagation(); navigatePhoto(1); }}
+            >
+              <ChevronRight className="w-8 h-8" />
+            </Button>
+          )}
+
           <img
             src={selectedPhoto.url}
             alt={selectedPhoto.caption || "Wedding photo"}
             className="max-w-full max-h-[90vh] object-contain rounded-lg"
             onClick={(e) => e.stopPropagation()}
           />
+
           {selectedPhoto.caption && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm px-6 py-3 rounded-full">
               <p className="text-white font-body">{selectedPhoto.caption}</p>
             </div>
           )}
+
+          {/* Counter */}
+          <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+            <p className="text-white text-sm font-sans">{selectedIndex! + 1} / {photos.length}</p>
+          </div>
         </div>
       )}
 

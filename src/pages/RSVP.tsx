@@ -15,30 +15,18 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Heart, ArrowLeft, Check, Loader2 } from "lucide-react";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 const rsvpSchema = z.object({
-  guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters"),
-  email: z.string().trim().email("Please enter a valid email").max(255, "Email must be less than 255 characters"),
-  phone: z.string().trim().max(20, "Phone must be less than 20 characters").optional(),
+  guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  phone: z.string().trim().min(6, "Phone number is required").max(20),
   attending: z.boolean(),
   has_plus_one: z.boolean(),
-  plus_one_name: z.string().trim().max(100, "Name must be less than 100 characters").optional(),
-  message: z.string().trim().max(1000, "Message must be less than 1000 characters").optional(),
+  plus_one_name: z.string().trim().max(100).optional(),
+  message: z.string().trim().max(1000).optional(),
   receive_photos: z.boolean(),
+  email: z.string().trim().email("Please enter a valid email").max(255).optional().or(z.literal("")),
 });
 
 type RSVPFormData = z.infer<typeof rsvpSchema>;
@@ -47,40 +35,41 @@ const RSVP = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [guestCount, setGuestCount] = useState<number | null>(null);
+  const [giftCount, setGiftCount] = useState<number | null>(null);
 
   const form = useForm<RSVPFormData>({
     resolver: zodResolver(rsvpSchema),
     defaultValues: {
       guest_name: "",
-      email: "",
       phone: "",
+      email: "",
       attending: true,
       has_plus_one: false,
       plus_one_name: "",
       message: "",
-      receive_photos: true,
+      receive_photos: false,
     },
   });
 
   const attending = form.watch("attending");
   const hasPlussOne = form.watch("has_plus_one");
+  const receivePhotos = form.watch("receive_photos");
 
   const onSubmit = async (data: RSVPFormData) => {
     setIsSubmitting(true);
-
     try {
       const { error } = await supabase.from("rsvps").insert({
         guest_name: data.guest_name,
-        email: data.email,
+        email: data.email || null,
         phone: data.phone || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
         message: data.message,
       });
-
       if (error) throw error;
 
-      // Add to email list if opted in
+      // Add to email list if opted in and email provided
       if (data.receive_photos && data.email) {
         await supabase.from("email_list").upsert(
           { name: data.guest_name, email: data.email, phone: data.phone || null, source: "rsvp" },
@@ -88,17 +77,24 @@ const RSVP = () => {
         );
       }
 
-      // Send email notifications (fire-and-forget)
+      // Email notifications (fire-and-forget)
       const emailPayload = {
         guest_name: data.guest_name,
-        guest_email: data.email,
+        guest_email: data.email || null,
         attending: data.attending,
         plus_one_name: data.has_plus_one ? data.plus_one_name : null,
-        
         message: data.message,
       };
       supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-confirmation", ...emailPayload } }).catch(() => {});
       supabase.functions.invoke("email-notifications", { body: { action: "send-rsvp-admin-alert", ...emailPayload } }).catch(() => {});
+
+      // Fetch counts
+      const [rsvpCount, wallCount] = await Promise.all([
+        supabase.from("rsvps").select("id", { count: "exact", head: true }).eq("attending", true),
+        supabase.from("gift_wall").select("id", { count: "exact", head: true }),
+      ]);
+      setGuestCount(rsvpCount.count || 0);
+      setGiftCount(wallCount.count || 0);
 
       setIsSubmitted(true);
       toast.success("RSVP submitted successfully!");
@@ -123,11 +119,28 @@ const RSVP = () => {
               <h1 className="font-display text-3xl md:text-4xl text-foreground mb-4">
                 Thank You!
               </h1>
-              <p className="text-muted-foreground font-body text-lg mb-8">
+              <p className="text-muted-foreground font-body text-lg mb-6">
                 {attending
                   ? "We're thrilled you can join us on our special day! We can't wait to celebrate with you."
                   : "We're sorry you won't be able to make it, but thank you for letting us know. You'll be in our hearts on our special day."}
               </p>
+
+              {/* Public counts */}
+              {guestCount !== null && (
+                <div className="flex justify-center gap-6 mb-8">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary font-sans">{guestCount}</p>
+                    <p className="text-sm text-muted-foreground font-body">Guests Going 🎉</p>
+                  </div>
+                  {giftCount !== null && giftCount > 0 && (
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-primary font-sans">{giftCount}</p>
+                      <p className="text-sm text-muted-foreground font-body">Gifts Received 💛</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Button asChild className="bg-primary hover:bg-primary/90 font-display">
                 <Link to="/">
                   <ArrowLeft className="w-4 h-4 mr-2" />
@@ -172,56 +185,29 @@ const RSVP = () => {
                     <FormItem>
                       <FormLabel className="font-display text-lg">Your Name *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Enter your full name"
-                          className="border-primary/20 focus:border-primary"
-                          {...field}
-                        />
+                        <Input placeholder="Enter your full name" className="border-primary/20 focus:border-primary" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Email */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-display text-lg">Email Address *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="your@email.com"
-                          className="border-primary/20 focus:border-primary"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Phone */}
+                {/* Phone (required) */}
                 <FormField
                   control={form.control}
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-display text-lg">Phone Number (Optional)</FormLabel>
+                      <FormLabel className="font-display text-lg">Phone Number *</FormLabel>
                       <FormControl>
-                        <Input
-                          type="tel"
-                          placeholder="+233 XX XXX XXXX"
-                          className="border-primary/20 focus:border-primary"
-                          {...field}
-                        />
+                        <Input type="tel" placeholder="+233 XX XXX XXXX" className="border-primary/20 focus:border-primary" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {/* Attending */}
                 <FormField
                   control={form.control}
                   name="attending"
@@ -236,15 +222,11 @@ const RSVP = () => {
                         >
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="yes" id="attending-yes" />
-                            <Label htmlFor="attending-yes" className="font-body cursor-pointer">
-                              Joyfully Accept
-                            </Label>
+                            <Label htmlFor="attending-yes" className="font-body cursor-pointer">Joyfully Accept</Label>
                           </div>
                           <div className="flex items-center space-x-2">
                             <RadioGroupItem value="no" id="attending-no" />
-                            <Label htmlFor="attending-no" className="font-body cursor-pointer">
-                              Regretfully Decline
-                            </Label>
+                            <Label htmlFor="attending-no" className="font-body cursor-pointer">Regretfully Decline</Label>
                           </div>
                         </RadioGroup>
                       </FormControl>
@@ -255,22 +237,16 @@ const RSVP = () => {
 
                 {attending && (
                   <>
-                    {/* Plus One */}
                     <FormField
                       control={form.control}
                       name="has_plus_one"
                       render={({ field }) => (
                         <FormItem className="flex items-start space-x-3 space-y-0">
                           <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <div className="space-y-1 leading-none">
-                            <FormLabel className="font-body cursor-pointer">
-                              I will be bringing a plus one
-                            </FormLabel>
+                            <FormLabel className="font-body cursor-pointer">I will be bringing a plus one</FormLabel>
                           </div>
                         </FormItem>
                       )}
@@ -284,19 +260,13 @@ const RSVP = () => {
                           <FormItem>
                             <FormLabel className="font-display">Guest Name</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="Enter your guest's name"
-                                className="border-primary/20 focus:border-primary"
-                                {...field}
-                              />
+                              <Input placeholder="Enter your guest's name" className="border-primary/20 focus:border-primary" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     )}
-
-
                   </>
                 )}
 
@@ -308,11 +278,7 @@ const RSVP = () => {
                     <FormItem>
                       <FormLabel className="font-display text-lg">Leave a Message (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea
-                          placeholder="Share your well wishes or a note for the couple..."
-                          className="border-primary/20 focus:border-primary min-h-[120px]"
-                          {...field}
-                        />
+                        <Textarea placeholder="Share your well wishes or a note for the couple..." className="border-primary/20 focus:border-primary min-h-[120px]" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -326,22 +292,32 @@ const RSVP = () => {
                   render={({ field }) => (
                     <FormItem className="flex items-start space-x-3 space-y-0">
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel className="font-body cursor-pointer">
-                          I'd like to receive photos from the event
-                        </FormLabel>
-                        <p className="text-xs text-muted-foreground">
-                          We'll add you to our email list to share pictures after the celebration.
-                        </p>
+                        <FormLabel className="font-body cursor-pointer">I'd like to receive photos from the event</FormLabel>
+                        <p className="text-xs text-muted-foreground">We'll need your email to share pictures after the celebration.</p>
                       </div>
                     </FormItem>
                   )}
                 />
+
+                {/* Email (shown only when receive_photos is checked) */}
+                {receivePhotos && (
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-display text-lg">Email Address</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="your@email.com" className="border-primary/20 focus:border-primary" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {/* Submit */}
                 <Button
@@ -350,15 +326,9 @@ const RSVP = () => {
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg font-display shadow-elegant"
                 >
                   {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Submitting...
-                    </>
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Submitting...</>
                   ) : (
-                    <>
-                      <Heart className="w-5 h-5 mr-2" />
-                      Submit RSVP
-                    </>
+                    <><Heart className="w-5 h-5 mr-2" /> Submit RSVP</>
                   )}
                 </Button>
               </form>
