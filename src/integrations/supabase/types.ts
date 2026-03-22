@@ -225,6 +225,7 @@ export type Database = {
           id: string
           is_visible: boolean
           message: string | null
+          phone: string | null
         }
         Insert: {
           created_at?: string
@@ -233,6 +234,7 @@ export type Database = {
           id?: string
           is_visible?: boolean
           message?: string | null
+          phone?: string | null
         }
         Update: {
           created_at?: string
@@ -241,6 +243,7 @@ export type Database = {
           id?: string
           is_visible?: boolean
           message?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
