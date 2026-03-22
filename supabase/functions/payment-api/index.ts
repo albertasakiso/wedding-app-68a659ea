@@ -285,15 +285,16 @@ Deno.serve(async (req) => {
       }
 
       case "record-manual-gift": {
-        const { donor_name, message, gift_option_id } = params;
+        const { donor_name, message, gift_option_id, phone, gift_type } = params;
         if (!donor_name?.trim()) return json({ error: "Name is required" }, 400);
 
         const { error: insertErr } = await supabase
           .from("gift_wall")
           .insert({
             donor_name: donor_name.trim(),
-            gift_type: "cash",
+            gift_type: gift_type || "cash",
             message: message || null,
+            phone: phone || null,
           });
 
         if (insertErr) return json({ error: insertErr.message }, 400);

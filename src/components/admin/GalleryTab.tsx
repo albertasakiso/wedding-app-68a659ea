@@ -2,10 +2,11 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Trash2, Upload } from "lucide-react";
+import { Trash2, Upload, CheckCircle } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { convertToWebP, formatFileSize } from "@/lib/image-utils";
 
 interface GalleryTabProps {
   photos: any[];
@@ -17,21 +18,31 @@ export default function GalleryTab({ photos, onRefresh }: GalleryTabProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption] = useState("");
+  const [conversionInfo, setConversionInfo] = useState<{ original: string; converted: string } | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setConversionInfo(null);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `admin/${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("gallery").upload(path, file);
+      // Convert to WebP
+      const result = await convertToWebP(file, 15);
+      setConversionInfo({
+        original: formatFileSize(result.originalSize),
+        converted: formatFileSize(result.convertedSize),
+      });
+
+      const path = `admin/${Date.now()}.webp`;
+      const { error: uploadError } = await supabase.storage
+        .from("gallery")
+        .upload(path, result.blob, { contentType: "image/webp" });
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from("gallery").getPublicUrl(path);
       await adminApi("insert-photo", { url: urlData.publicUrl, caption });
       setCaption("");
-      toast({ title: "Photo uploaded" });
+      toast({ title: "Photo uploaded as WebP ✓" });
       onRefresh();
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
@@ -64,10 +75,16 @@ export default function GalleryTab({ photos, onRefresh }: GalleryTabProps) {
             <div>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
               <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-2">
-                <Upload className="h-4 w-4" /> {uploading ? "Uploading..." : "Upload Photo"}
+                <Upload className="h-4 w-4" /> {uploading ? "Converting & Uploading..." : "Upload Photo"}
               </Button>
             </div>
           </div>
+          {conversionInfo && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>Converted: {conversionInfo.original} → {conversionInfo.converted} (WebP)</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
