@@ -52,7 +52,11 @@ export type Database = {
           gift_thankyou_message: string
           gift_thankyou_subject: string
           id: string
+          rsvp_confirmation_message: string | null
+          rsvp_confirmation_subject: string | null
           rsvp_notification_enabled: boolean
+          rsvp_reminder_message: string | null
+          rsvp_reminder_subject: string | null
           sender_email: string | null
           sender_name: string
         }
@@ -63,7 +67,11 @@ export type Database = {
           gift_thankyou_message?: string
           gift_thankyou_subject?: string
           id?: string
+          rsvp_confirmation_message?: string | null
+          rsvp_confirmation_subject?: string | null
           rsvp_notification_enabled?: boolean
+          rsvp_reminder_message?: string | null
+          rsvp_reminder_subject?: string | null
           sender_email?: string | null
           sender_name?: string
         }
@@ -74,7 +82,11 @@ export type Database = {
           gift_thankyou_message?: string
           gift_thankyou_subject?: string
           id?: string
+          rsvp_confirmation_message?: string | null
+          rsvp_confirmation_subject?: string | null
           rsvp_notification_enabled?: boolean
+          rsvp_reminder_message?: string | null
+          rsvp_reminder_subject?: string | null
           sender_email?: string | null
           sender_name?: string
         }
