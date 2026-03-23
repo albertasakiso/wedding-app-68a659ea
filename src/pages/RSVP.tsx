@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download } from "lucide-react";
+import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
