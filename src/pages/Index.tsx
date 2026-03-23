@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import EventTimeline from "@/components/EventTimeline";
 import VenueSection from "@/components/VenueSection";
 import GalleryPreview from "@/components/GalleryPreview";
+import MessagesWall from "@/components/MessagesWall";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -16,6 +17,7 @@ const Index = () => {
         <EventTimeline />
         <VenueSection />
         <GalleryPreview />
+        <MessagesWall />
       </main>
       <Footer />
     </div>
