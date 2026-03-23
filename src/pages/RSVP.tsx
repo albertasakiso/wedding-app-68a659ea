@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download } from "lucide-react";
+import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -106,6 +107,32 @@ const RSVP = () => {
     }
   };
 
+  // Fetch venue + site settings for calendar
+  const [venueInfo, setVenueInfo] = useState<any>(null);
+  const [siteSettings, setSiteSettings] = useState<any>(null);
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from("venue_info").select("*").limit(1).single(),
+      supabase.from("site_settings").select("*").limit(1).single(),
+    ]).then(([venueRes, siteRes]) => {
+      setVenueInfo(venueRes.data);
+      setSiteSettings(siteRes.data);
+    });
+  }, []);
+
+  const calendarEvent: CalendarEvent | null =
+    siteSettings && venueInfo
+      ? {
+          title: `${siteSettings.couple_names} Wedding`,
+          description: `Join us to celebrate the wedding of ${siteSettings.couple_names}!`,
+          location: venueInfo.address || venueInfo.name || "",
+          startDate: new Date(siteSettings.wedding_date),
+          endDate: new Date(new Date(siteSettings.wedding_date).getTime() + 5 * 60 * 60 * 1000),
+          mapUrl: getGoogleMapsUrl(venueInfo.latitude, venueInfo.longitude, venueInfo.address),
+        }
+      : null;
+
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-background">
@@ -137,6 +164,47 @@ const RSVP = () => {
                       <p className="text-3xl font-bold text-primary font-sans">{giftCount}</p>
                       <p className="text-sm text-muted-foreground font-body">Gifts Received 💛</p>
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Add to Calendar */}
+              {attending && calendarEvent && (
+                <div className="mb-8 space-y-3">
+                  <p className="text-sm text-muted-foreground font-body mb-3">Save the date to your calendar:</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="gap-2 border-primary/20"
+                    >
+                      <a href={generateGoogleCalendarUrl(calendarEvent)} target="_blank" rel="noopener noreferrer">
+                        <Calendar className="w-4 h-4" /> Google Calendar
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-primary/20"
+                      onClick={() => downloadICSFile(calendarEvent)}
+                    >
+                      <Download className="w-4 h-4" /> Apple / Outlook
+                    </Button>
+                  </div>
+                  {venueInfo && (venueInfo.latitude || venueInfo.address) && (
+                    <Button
+                      asChild
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-muted-foreground"
+                    >
+                      <a
+                        href={getGoogleMapsUrl(venueInfo.latitude, venueInfo.longitude, venueInfo.address)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MapPin className="w-4 h-4" /> Open Venue in Maps
+                      </a>
+                    </Button>
                   )}
                 </div>
               )}

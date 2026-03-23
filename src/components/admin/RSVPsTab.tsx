@@ -3,8 +3,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Download, Search } from "lucide-react";
+import { Trash2, Download, Search, Bell, Loader2 } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface RSVPsTabProps {
@@ -14,6 +15,7 @@ interface RSVPsTabProps {
 
 export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
   const [search, setSearch] = useState("");
+  const [sendingReminders, setSendingReminders] = useState(false);
   const { toast } = useToast();
 
   const filtered = rsvps.filter((r) =>
@@ -29,6 +31,33 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
       onRefresh();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  const handleSendReminders = async () => {
+    const guestsWithEmail = rsvps.filter((r) => r.attending && r.email);
+    if (guestsWithEmail.length === 0) {
+      return toast({ title: "No guests with email", description: "No attending guests have provided an email address.", variant: "destructive" });
+    }
+    if (!confirm(`Send reminder emails to ${guestsWithEmail.length} attending guests with email addresses?`)) return;
+
+    setSendingReminders(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("email-notifications", {
+        body: {
+          action: "send-rsvp-reminder",
+          guests: guestsWithEmail.map((g: any) => ({
+            guest_name: g.guest_name,
+            guest_email: g.email,
+          })),
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Reminders sent!", description: `${data?.sent_count || guestsWithEmail.length} reminder emails queued.` });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to send reminders", variant: "destructive" });
+    } finally {
+      setSendingReminders(false);
     }
   };
 
@@ -50,8 +79,8 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1">
+      <div className="flex gap-3 items-center flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search guests..."
@@ -62,6 +91,14 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
         </div>
         <Button variant="outline" onClick={exportCSV} className="gap-2">
           <Download className="h-4 w-4" /> Export CSV
+        </Button>
+        <Button
+          onClick={handleSendReminders}
+          disabled={sendingReminders}
+          className="gap-2 bg-primary text-primary-foreground"
+        >
+          {sendingReminders ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
+          Send Reminders
         </Button>
       </div>
 
