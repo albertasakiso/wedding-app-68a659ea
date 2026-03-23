@@ -1,102 +1,73 @@
 
 
-## Premium Upgrade: Gifts, RSVP, Gallery, and Public Wall
+## Multi-Feature: Messages Wall, Brevo Config, RSVP Reminders, Add to Calendar
 
-This is a large multi-feature request. I'll break it into clear implementation steps.
+### 1. Public Messages Wall (Scrolling Testimonials)
 
----
+Create a new component `MessagesWall.tsx` using framer-motion's infinite scroll animation (from the design provided). Display real RSVP messages from Supabase with anonymized signatures (first 4 chars of name + last 4 of phone). Place it on the homepage between GalleryPreview and Footer, and also as a section on the Gifts page.
 
-### 1. Gifts Page — Bold, Clear Payment Details
+- Fetch from `rsvps` table where `message IS NOT NULL`
+- Realtime subscription for live updates
+- Two or three columns with different scroll speeds for visual depth
+- Each card shows the message text + anonymized signature (e.g., "ASAK....4618")
+- No mock data — empty state if no messages exist yet
 
-**`src/pages/Gifts.tsx`**:
-- Increase MoMo/Telecel phone numbers to `text-2xl font-bold font-sans tracking-wider` (using system sans-serif for maximum number clarity)
-- Bank account number and all bank details: same bold, enlarged, clear sans-serif treatment
-- Labels like "Account Name", "Bank" stay as muted descriptors but details are bold and large
-- Remove any decorative border lines on the sides of the payment cards (set `border-none` or remove `border` class, use only `shadow-soft`)
-- Make the gift confirmation form ask for phone number (required) and gift type (MoMo / Bank / Physical Gift) so the wall can display it
+**Files**: `src/components/MessagesWall.tsx` (new), `src/pages/Index.tsx` (add section)
 
-### 2. RSVP Form — Email Optional, Phone Required
+### 2. Brevo Email Configuration in Admin Settings
 
-**`src/pages/RSVP.tsx`**:
-- Make email **optional** — only prompt for email when "I'd like to receive photos" is checked
-- Make phone number **required** (used for public wall display)
-- Update zod schema accordingly
-- On successful RSVP submission, fetch and display a public count: "🎉 You are guest #68!" by querying `rsvps` count where `attending = true`
-- Show gift wall count too: "💛 X gifts received so far"
+The provided Brevo API key (`xkeysib-399fbd74...`) is a secret — store it via the secrets tool (it's already stored as `BREVO_API_KEY`; will verify). The EmailSettingsTab already exists and manages Brevo sender settings. Add custom message templates for:
+- RSVP confirmation message (customizable subject + body)
+- RSVP admin alert message
+- Gift thank-you message (already exists)
 
-### 3. Gallery Page — Carousel with Modal Lightbox
+**Files**: `src/components/admin/EmailSettingsTab.tsx` (add RSVP template customization fields), `supabase/functions/email-notifications/index.ts` (read custom templates from `email_settings`), database migration to add new columns to `email_settings`
 
-**`src/pages/Gallery.tsx`**:
-- Replace the masonry grid with a responsive carousel (using Embla via shadcn Carousel component already in project)
-- Click on any photo opens the existing lightbox modal with prev/next navigation
-- Realtime Supabase subscription so new photos appear live
+### 3. RSVP Reminder Notifications
 
-### 4. Admin Gift Registry — Image Upload with WebP Conversion
+Add a "Send Reminder" button in the admin RSVPs tab that sends a Brevo email to all RSVP'd guests who provided an email, reminding them of the wedding date/venue.
 
-**`src/components/admin/GiftsTab.tsx`**:
-- Replace the "Image URL" text input with a proper file upload input
-- Accept images up to 15MB, client-side convert to WebP using Canvas API before upload
-- Show upload progress, conversion status (original size → WebP size)
-- Store in Supabase `gallery` storage bucket (or create a `gifts` bucket)
-- On edit, pre-populate all fields including showing the current image preview
-- Gift type options expanded: Cash, MoMo, Bank, Physical Gift
+- New action `send-rsvp-reminder` in `email-notifications` edge function
+- Admin UI button in RSVPsTab with confirmation dialog
+- Custom reminder email template (reads wedding date + venue from DB)
+- Track which guests received reminders to avoid duplicates
 
-### 5. Admin Gallery — Image Upload with WebP Conversion
+**Files**: `src/components/admin/RSVPsTab.tsx` (add reminder button), `supabase/functions/email-notifications/index.ts` (add `send-rsvp-reminder` action)
 
-**`src/components/admin/GalleryTab.tsx`**:
-- Same WebP conversion treatment: accept up to 15MB, convert client-side, show conversion stats
-- On upload success show size reduction info
+### 4. Add to Calendar Feature
 
-### 6. Public Wall — Two-Column RSVP | Gifts
+After successful RSVP submission, show an "Add to Calendar" button that generates calendar links/files:
+- Google Calendar link (opens in browser)
+- Apple/Outlook (.ics file download)
+- Calendar event includes: wedding date/time, venue name, address, and a deep link to Google Maps using venue coordinates
 
-**`src/pages/Gifts.tsx`** (bottom section, replaces current Gift Wall):
-- Two-column layout: **RSVP** column | **Gifts** column
-- **RSVP column**: Show entries as "ASAK....4618 — RSVP'd" (first 4 chars of first name + last 4 digits of phone)
-- **Gifts column**: Show entries as "ASAK....4618 — MoMo" (first 4 of name + last 4 of phone + gift type badge)
-- No full names, no amounts displayed
-- Fetch RSVP data from `rsvps` table (attending = true) and gift_wall data
+Fetch venue info from Supabase to populate location fields.
 
-### 7. Database Changes
-
-**Migration**: Add `phone` column to `gift_wall` table:
-```sql
-ALTER TABLE public.gift_wall ADD COLUMN IF NOT EXISTS phone text;
-```
-
-Update `gift_wall` RLS to allow public INSERT (for the self-report form):
-```sql
-CREATE POLICY "Anyone can insert gift wall"
-ON public.gift_wall FOR INSERT TO public
-WITH CHECK (true);
-```
-
-### 8. Edge Function Updates
-
-**`supabase/functions/payment-api/index.ts`**: Update `record-manual-gift` to accept `phone` and `gift_type` params.
-
-### 9. Realtime Subscriptions
-
-**`src/pages/Gifts.tsx`** and **`src/pages/Gallery.tsx`**: Add Supabase realtime subscriptions on `gift_wall`, `rsvps`, and `gallery_photos` tables so content updates live without refresh.
-
-### 10. Shared WebP Conversion Utility
-
-**`src/lib/image-utils.ts`** (new): Create a reusable `convertToWebP(file, maxSizeMB)` function that:
-- Uses Canvas API to convert any image to WebP
-- Returns the WebP blob + metadata (original size, converted size)
-- Used by both GalleryTab and GiftsTab
+**Files**: `src/pages/RSVP.tsx` (add calendar buttons to success state), `src/lib/calendar-utils.ts` (new — generate Google Calendar URL and .ics file)
 
 ---
 
-### Files to Create/Modify
+### Database Migration
+
+Add columns to `email_settings`:
+```sql
+ALTER TABLE public.email_settings 
+  ADD COLUMN IF NOT EXISTS rsvp_confirmation_subject text DEFAULT 'RSVP Confirmation — Albert & Ruby Wedding',
+  ADD COLUMN IF NOT EXISTS rsvp_confirmation_message text DEFAULT 'Thank you for your RSVP! We can''t wait to celebrate with you.',
+  ADD COLUMN IF NOT EXISTS rsvp_reminder_subject text DEFAULT 'Reminder: Albert & Ruby Wedding is Coming!',
+  ADD COLUMN IF NOT EXISTS rsvp_reminder_message text DEFAULT 'Just a friendly reminder that our wedding is coming up soon. We can''t wait to see you there!';
+```
+
+### Files Summary
 
 | File | Action |
 |------|--------|
-| `supabase/migrations/...` | Add `phone` to `gift_wall`, add INSERT RLS policy |
-| `src/lib/image-utils.ts` | New: WebP conversion utility |
-| `src/pages/Gifts.tsx` | Bold payment numbers, phone+type in confirm form, two-column public wall with RSVP+Gifts, realtime |
-| `src/pages/RSVP.tsx` | Email optional (prompted by photo checkbox), phone required, show count on success |
-| `src/pages/Gallery.tsx` | Carousel layout, lightbox with nav, realtime subscription |
-| `src/components/admin/GiftsTab.tsx` | Image upload with WebP conversion, edit pre-population, expanded gift types |
-| `src/components/admin/GalleryTab.tsx` | WebP conversion on upload, size stats |
-| `supabase/functions/payment-api/index.ts` | Accept phone + gift_type in `record-manual-gift` |
+| `supabase/migrations/...` | Add RSVP email template columns to `email_settings` |
+| `src/components/MessagesWall.tsx` | New: scrolling messages wall with framer-motion |
+| `src/pages/Index.tsx` | Add MessagesWall section |
+| `src/lib/calendar-utils.ts` | New: Google Calendar URL + .ics file generator |
+| `src/pages/RSVP.tsx` | Add calendar buttons + venue fetch on success |
+| `src/components/admin/EmailSettingsTab.tsx` | Add RSVP email template customization |
+| `src/components/admin/RSVPsTab.tsx` | Add "Send Reminder" button |
+| `supabase/functions/email-notifications/index.ts` | Add `send-rsvp-reminder` action, use custom RSVP templates |
 
