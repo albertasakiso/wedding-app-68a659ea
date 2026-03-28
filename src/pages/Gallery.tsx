@@ -5,9 +5,6 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
-} from "@/components/ui/carousel";
 
 interface Photo {
   id: string;
