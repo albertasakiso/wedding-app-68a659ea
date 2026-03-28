@@ -5,9 +5,6 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious,
-} from "@/components/ui/carousel";
 
 interface Photo {
   id: string;
@@ -97,62 +94,29 @@ const Gallery = () => {
               <p className="text-muted-foreground font-body">Loading gallery...</p>
             </div>
           ) : photos.length > 0 ? (
-            <>
-              {/* Carousel */}
-              <div className="max-w-4xl mx-auto mb-12">
-                <Carousel opts={{ align: "start", loop: true }} className="w-full">
-                  <CarouselContent>
-                    {photos.map((photo, idx) => (
-                      <CarouselItem key={photo.id} className="basis-full md:basis-1/2 lg:basis-1/3">
-                        <div
-                          className="cursor-pointer group relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all aspect-square"
-                          onClick={() => setSelectedIndex(idx)}
-                        >
-                          <img
-                            src={photo.url}
-                            alt={photo.caption || "Wedding photo"}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
-                          {photo.caption && (
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                              <p className="text-white font-body text-sm">{photo.caption}</p>
-                            </div>
-                          )}
-                        </div>
-                      </CarouselItem>
-                    ))}
-                  </CarouselContent>
-                  <CarouselPrevious className="-left-4" />
-                  <CarouselNext className="-right-4" />
-                </Carousel>
-              </div>
-
-              {/* Grid below */}
-              <div className="columns-2 md:columns-3 lg:columns-4 gap-4 max-w-6xl mx-auto">
-                {photos.map((photo, idx) => (
-                  <div
-                    key={photo.id}
-                    className="break-inside-avoid mb-4 cursor-pointer group"
-                    onClick={() => setSelectedIndex(idx)}
-                  >
-                    <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all">
-                      <img
-                        src={photo.url}
-                        alt={photo.caption || "Wedding photo"}
-                        className="w-full h-auto group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      {photo.caption && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                          <p className="text-white font-body text-sm">{photo.caption}</p>
-                        </div>
-                      )}
-                    </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+              {photos.map((photo, idx) => (
+                <div
+                  key={photo.id}
+                  className="cursor-pointer group"
+                  onClick={() => setSelectedIndex(idx)}
+                >
+                  <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all aspect-square">
+                    <img
+                      src={photo.url}
+                      alt={photo.caption || "Wedding photo"}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    {photo.caption && (
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                        <p className="text-white font-body text-sm">{photo.caption}</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            </>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
