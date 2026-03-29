@@ -65,7 +65,7 @@ const Navigation = () => {
               <button
                 key={item.label}
                 onClick={item.action}
-                className="font-body text-base tracking-wide text-foreground/70 hover:text-foreground transition-colors"
+                className="font-body text-base tracking-wide text-foreground/80 hover:text-foreground transition-colors font-bold"
               >
                 {item.label}
               </button>
