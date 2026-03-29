@@ -98,7 +98,7 @@ const Navigation = () => {
                 <button
                   key={item.label}
                   onClick={item.action}
-                  className="font-body text-lg py-2 text-foreground/70 text-left"
+                  className="font-body text-lg py-2 text-foreground/80 text-left font-bold"
                 >
                   {item.label}
                 </button>
