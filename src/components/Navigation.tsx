@@ -88,8 +88,8 @@ const Navigation = () => {
                   to={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    "font-body text-lg py-2 transition-colors",
-                    item.highlight ? "text-primary font-semibold" : "text-foreground/70"
+                    "font-body text-lg py-2 transition-colors font-bold",
+                    item.highlight ? "text-primary" : "text-foreground/80"
                   )}
                 >
                   {item.label}
