@@ -53,10 +53,10 @@ const Navigation = () => {
                 key={item.label}
                 to={item.href}
                 className={cn(
-                  "font-body text-base tracking-wide transition-colors",
+                  "font-body text-base tracking-wide transition-colors font-bold",
                   item.highlight
-                    ? "text-primary hover:text-primary/80 font-semibold"
-                    : "text-foreground/70 hover:text-foreground"
+                    ? "text-primary hover:text-primary/80"
+                    : "text-foreground/80 hover:text-foreground"
                 )}
               >
                 {item.label}
@@ -65,7 +65,7 @@ const Navigation = () => {
               <button
                 key={item.label}
                 onClick={item.action}
-                className="font-body text-base tracking-wide text-foreground/70 hover:text-foreground transition-colors"
+                className="font-body text-base tracking-wide text-foreground/80 hover:text-foreground transition-colors font-bold"
               >
                 {item.label}
               </button>
@@ -88,8 +88,8 @@ const Navigation = () => {
                   to={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    "font-body text-lg py-2 transition-colors",
-                    item.highlight ? "text-primary font-semibold" : "text-foreground/70"
+                    "font-body text-lg py-2 transition-colors font-bold",
+                    item.highlight ? "text-primary" : "text-foreground/80"
                   )}
                 >
                   {item.label}
@@ -98,7 +98,7 @@ const Navigation = () => {
                 <button
                   key={item.label}
                   onClick={item.action}
-                  className="font-body text-lg py-2 text-foreground/70 text-left"
+                  className="font-body text-lg py-2 text-foreground/80 text-left font-bold"
                 >
                   {item.label}
                 </button>
