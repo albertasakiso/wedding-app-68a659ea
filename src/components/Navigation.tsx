@@ -53,10 +53,10 @@ const Navigation = () => {
                 key={item.label}
                 to={item.href}
                 className={cn(
-                  "font-body text-base tracking-wide transition-colors",
+                  "font-body text-base tracking-wide transition-colors font-bold",
                   item.highlight
-                    ? "text-primary hover:text-primary/80 font-semibold"
-                    : "text-foreground/70 hover:text-foreground"
+                    ? "text-primary hover:text-primary/80"
+                    : "text-foreground/80 hover:text-foreground"
                 )}
               >
                 {item.label}
