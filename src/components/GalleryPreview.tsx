@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Camera, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 interface Photo {
   id: string;
@@ -17,8 +18,22 @@ const placeholders = [
   { id: "4", caption: "Love" },
 ];
 
+function FadeImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={`${className} transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+      loading="lazy"
+      onLoad={() => setLoaded(true)}
+    />
+  );
+}
+
 const GalleryPreview = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const { ref, isVisible } = useScrollReveal({ threshold: 0.15 });
 
   useEffect(() => {
     const fetchPhotos = async () => {
@@ -33,7 +48,12 @@ const GalleryPreview = () => {
   }, []);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-cream/30 to-background">
+    <section
+      ref={ref}
+      className={`py-24 bg-gradient-to-b from-cream/30 to-background transition-all duration-700 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-4 font-body">Our Moments</p>
@@ -50,14 +70,13 @@ const GalleryPreview = () => {
             ? photos.map((photo, index) => (
                 <div
                   key={photo.id}
-                  className="aspect-square rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all hover:scale-[1.02] cursor-pointer border border-primary/20"
+                  className="aspect-square rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all hover:scale-[1.02] cursor-pointer border border-primary/20 bg-muted"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <img
+                  <FadeImage
                     src={photo.url}
                     alt={photo.caption || "Gallery photo"}
                     className="w-full h-full object-cover"
-                    loading="lazy"
                   />
                 </div>
               ))

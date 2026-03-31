@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send } from "lucide-react";
 import { anonymizeEntry } from "@/lib/image-utils";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 interface GiftWallEntry {
   id: string;
@@ -38,6 +39,7 @@ export default function Gifts() {
   const [donorPhone, setDonorPhone] = useState("");
   const [donorMessage, setDonorMessage] = useState("");
   const [giftType, setGiftType] = useState("momo");
+  const { ref: wallRef, isVisible: wallVisible } = useScrollReveal({ threshold: 0.1 });
 
   const fetchData = async () => {
     try {
@@ -63,18 +65,14 @@ export default function Gifts() {
 
   useEffect(() => {
     fetchData();
-
-    // Realtime subscriptions
     const giftChannel = supabase
       .channel("gift-wall-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "gift_wall" }, () => fetchData())
       .subscribe();
-
     const rsvpChannel = supabase
       .channel("rsvp-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "rsvps" }, () => fetchData())
       .subscribe();
-
     return () => {
       supabase.removeChannel(giftChannel);
       supabase.removeChannel(rsvpChannel);
@@ -139,13 +137,13 @@ export default function Gifts() {
           {/* Payment Details */}
           <div className="max-w-xl mx-auto space-y-5 mb-16">
             {/* MTN MoMo */}
-            <div className="rounded-xl p-6 bg-card shadow-sm">
+            <div className="rounded-xl p-6 bg-card shadow-sm hover:scale-[1.01] transition-transform">
               <div className="flex items-center gap-2 mb-3">
                 <Smartphone className="w-5 h-5 text-yellow-600" />
                 <span className="font-body font-semibold text-foreground">MTN Mobile Money</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-sans text-2xl font-bold text-foreground tracking-wider">024 6904618</span>
+                <span className={`font-sans text-2xl font-bold tracking-wider transition-colors duration-300 ${copiedField === "mtn" ? "text-primary" : "text-foreground"}`}>024 6904618</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -158,13 +156,13 @@ export default function Gifts() {
             </div>
 
             {/* Telecel */}
-            <div className="rounded-xl p-6 bg-card shadow-sm">
+            <div className="rounded-xl p-6 bg-card shadow-sm hover:scale-[1.01] transition-transform">
               <div className="flex items-center gap-2 mb-3">
                 <Smartphone className="w-5 h-5 text-red-600" />
                 <span className="font-body font-semibold text-foreground">Telecel</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="font-sans text-2xl font-bold text-foreground tracking-wider">020 4532502</span>
+                <span className={`font-sans text-2xl font-bold tracking-wider transition-colors duration-300 ${copiedField === "telecel" ? "text-primary" : "text-foreground"}`}>020 4532502</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -177,7 +175,7 @@ export default function Gifts() {
             </div>
 
             {/* Bank */}
-            <div className="rounded-xl p-6 bg-card shadow-sm">
+            <div className="rounded-xl p-6 bg-card shadow-sm hover:scale-[1.01] transition-transform">
               <div className="flex items-center gap-2 mb-3">
                 <Building2 className="w-5 h-5 text-blue-600" />
                 <span className="font-body font-semibold text-foreground">Bank Transfer</span>
@@ -190,7 +188,7 @@ export default function Gifts() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground font-body">Account No.</span>
                   <div className="flex items-center gap-1">
-                    <span className="font-sans text-xl font-bold text-foreground tracking-wider">8011010337930</span>
+                    <span className={`font-sans text-xl font-bold tracking-wider transition-colors duration-300 ${copiedField === "acct" ? "text-primary" : "text-foreground"}`}>8011010337930</span>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -283,9 +281,12 @@ export default function Gifts() {
         </div>
       </section>
 
-      {/* Two-Column Public Wall: RSVP | Gifts */}
+      {/* Two-Column Public Wall */}
       {!loading && (rsvpList.length > 0 || giftWall.length > 0) && (
-        <section className="pb-20">
+        <section
+          ref={wallRef}
+          className={`pb-20 transition-all duration-700 ${wallVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
+        >
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <Users className="w-8 h-8 text-primary mx-auto mb-4" />
@@ -301,7 +302,7 @@ export default function Gifts() {
                 <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
                   <Heart className="w-4 h-4 text-primary" /> RSVP'd Guests
                 </h3>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2">
                   {rsvpList.map((entry) => (
                     <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
                       <span className="font-sans text-sm font-medium text-foreground">
@@ -323,7 +324,7 @@ export default function Gifts() {
                 <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
                   <Gift className="w-4 h-4 text-primary" /> Gifts Received
                 </h3>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2">
                   {giftWall.map((entry) => {
                     const badge = giftTypeBadge[entry.gift_type] || giftTypeBadge.cash;
                     return (
