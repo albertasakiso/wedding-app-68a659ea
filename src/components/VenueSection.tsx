@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { MapPin, Car, Building, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { useScrollReveal } from "@/hooks/useScrollReveal";
 
 interface Hotel {
   name: string;
@@ -36,6 +38,8 @@ const defaultVenue: VenueData = {
 
 const VenueSection = () => {
   const [venue, setVenue] = useState<VenueData>(defaultVenue);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const { ref: sectionRef, isVisible } = useScrollReveal({ threshold: 0.1 });
 
   useEffect(() => {
     const fetchVenue = async () => {
@@ -69,7 +73,13 @@ const VenueSection = () => {
     : venue.map_url || "https://maps.google.com";
 
   return (
-    <section id="venue" className="py-24 bg-gradient-to-b from-background to-cream/30">
+    <section
+      ref={sectionRef}
+      id="venue"
+      className={`py-24 bg-gradient-to-b from-background to-cream/30 transition-all duration-700 ${
+        isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <p className="text-muted-foreground text-sm tracking-[0.3em] uppercase mb-4 font-body">The Venue</p>
@@ -83,14 +93,18 @@ const VenueSection = () => {
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           <div className="space-y-6">
-            {/* Map or placeholder */}
+            {/* Map with skeleton */}
             {mapEmbedUrl ? (
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 shadow-elegant">
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 shadow-elegant relative">
+                {!mapLoaded && (
+                  <Skeleton className="absolute inset-0 rounded-2xl" />
+                )}
                 <iframe
                   src={mapEmbedUrl}
-                  className="w-full h-full border-0"
+                  className={`w-full h-full border-0 transition-opacity duration-500 ${mapLoaded ? "opacity-100" : "opacity-0"}`}
                   loading="lazy"
                   title={`Map of ${venue.name}`}
+                  onLoad={() => setMapLoaded(true)}
                 />
               </div>
             ) : (
@@ -158,7 +172,7 @@ const VenueSection = () => {
                   {venue.hotels.map((hotel) => (
                     <div
                       key={hotel.name}
-                      className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/5"
+                      className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-primary/5 hover:scale-[1.01] transition-transform"
                     >
                       <div>
                         <p className="font-body text-foreground font-medium">{hotel.name}</p>

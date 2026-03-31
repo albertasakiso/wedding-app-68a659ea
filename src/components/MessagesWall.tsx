@@ -21,10 +21,16 @@ function MessagesColumn({
   duration?: number;
   className?: string;
 }) {
+  const [paused, setPaused] = useState(false);
+
   if (messages.length === 0) return null;
 
   return (
-    <div className={`overflow-hidden ${className}`}>
+    <div
+      className={`overflow-hidden ${className}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
       <motion.div
         animate={{ translateY: "-50%" }}
         transition={{
@@ -33,10 +39,15 @@ function MessagesColumn({
           ease: "linear",
           repeatType: "loop",
         }}
+        style={{ willChange: "transform", animationPlayState: paused ? "paused" : "running" }}
         className="flex flex-col gap-6 pb-6"
       >
         {[0, 1].map((_, index) => (
-          <div key={index} className="flex flex-col gap-6">
+          <motion.div
+            key={index}
+            className="flex flex-col gap-6"
+            animate={paused ? { y: 0 } : undefined}
+          >
             {messages.map((msg) => (
               <div
                 key={`${index}-${msg.id}`}
@@ -60,7 +71,7 @@ function MessagesColumn({
                 </div>
               </div>
             ))}
-          </div>
+          </motion.div>
         ))}
       </motion.div>
     </div>
@@ -92,7 +103,6 @@ export default function MessagesWall() {
 
   if (messages.length === 0) return null;
 
-  // Split messages into 2-3 columns
   const col1 = messages.filter((_, i) => i % 3 === 0);
   const col2 = messages.filter((_, i) => i % 3 === 1);
   const col3 = messages.filter((_, i) => i % 3 === 2);

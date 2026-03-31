@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 interface Photo {
   id: string;
@@ -13,10 +14,37 @@ interface Photo {
   uploaded_by: string | null;
 }
 
+function GalleryImage({ photo, onClick }: { photo: Photo; onClick: () => void }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="cursor-pointer group" onClick={onClick}>
+      <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all aspect-square">
+        {!loaded && <Skeleton className="absolute inset-0" />}
+        <img
+          src={photo.url}
+          alt={photo.caption || "Wedding photo"}
+          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ${
+            loaded ? "opacity-100" : "opacity-0"
+          }`}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+        />
+        {photo.caption && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+            <p className="text-white font-body text-sm">{photo.caption}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const Gallery = () => {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [lightboxLoaded, setLightboxLoaded] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   const fetchPhotos = useCallback(async () => {
     try {
@@ -35,20 +63,35 @@ const Gallery = () => {
 
   useEffect(() => {
     fetchPhotos();
-
     const channel = supabase
       .channel("gallery-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "gallery_photos" }, () => fetchPhotos())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [fetchPhotos]);
 
-  const navigatePhoto = (direction: number) => {
+  const navigatePhoto = useCallback((direction: number) => {
+    setSelectedIndex((prev) => {
+      if (prev === null) return null;
+      const next = prev + direction;
+      if (next >= 0 && next < photos.length) {
+        setLightboxLoaded(false);
+        return next;
+      }
+      return prev;
+    });
+  }, [photos.length]);
+
+  // Preload adjacent images
+  useEffect(() => {
     if (selectedIndex === null) return;
-    const next = selectedIndex + direction;
-    if (next >= 0 && next < photos.length) setSelectedIndex(next);
-  };
+    [selectedIndex - 1, selectedIndex + 1].forEach((i) => {
+      if (i >= 0 && i < photos.length) {
+        const img = new Image();
+        img.src = photos[i].url;
+      }
+    });
+  }, [selectedIndex, photos]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -59,7 +102,20 @@ const Gallery = () => {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedIndex, photos.length]);
+  }, [selectedIndex, navigatePhoto]);
+
+  // Touch swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 50) {
+      navigatePhoto(delta > 0 ? -1 : 1);
+    }
+    touchStartX.current = null;
+  };
 
   const selectedPhoto = selectedIndex !== null ? photos[selectedIndex] : null;
 
@@ -68,7 +124,6 @@ const Gallery = () => {
       <Navigation />
       <main className="pt-32 pb-24">
         <div className="container mx-auto px-4">
-          {/* Header */}
           <div className="text-center mb-16">
             <Link
               to="/"
@@ -89,32 +144,15 @@ const Gallery = () => {
           </div>
 
           {loading ? (
-            <div className="text-center py-20">
-              <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground font-body">Loading gallery...</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-square rounded-xl" />
+              ))}
             </div>
           ) : photos.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
               {photos.map((photo, idx) => (
-                <div
-                  key={photo.id}
-                  className="cursor-pointer group"
-                  onClick={() => setSelectedIndex(idx)}
-                >
-                  <div className="relative rounded-xl overflow-hidden shadow-soft hover:shadow-elegant transition-all aspect-square">
-                    <img
-                      src={photo.url}
-                      alt={photo.caption || "Wedding photo"}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    {photo.caption && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                        <p className="text-white font-body text-sm">{photo.caption}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <GalleryImage key={photo.id} photo={photo} onClick={() => { setLightboxLoaded(false); setSelectedIndex(idx); }} />
               ))}
             </div>
           ) : (
@@ -147,11 +185,13 @@ const Gallery = () => {
         </div>
       </main>
 
-      {/* Lightbox Modal with Prev/Next */}
+      {/* Lightbox with swipe support */}
       {selectedPhoto && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedIndex(null)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
           <Button
             variant="ghost"
@@ -162,7 +202,6 @@ const Gallery = () => {
             <X className="w-6 h-6" />
           </Button>
 
-          {/* Previous */}
           {selectedIndex! > 0 && (
             <Button
               variant="ghost"
@@ -174,7 +213,6 @@ const Gallery = () => {
             </Button>
           )}
 
-          {/* Next */}
           {selectedIndex! < photos.length - 1 && (
             <Button
               variant="ghost"
@@ -186,12 +224,22 @@ const Gallery = () => {
             </Button>
           )}
 
-          <img
-            src={selectedPhoto.url}
-            alt={selectedPhoto.caption || "Wedding photo"}
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative">
+            {!lightboxLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-white animate-spin" />
+              </div>
+            )}
+            <img
+              src={selectedPhoto.url}
+              alt={selectedPhoto.caption || "Wedding photo"}
+              className={`max-w-full max-h-[90vh] object-contain rounded-lg transition-opacity duration-300 ${
+                lightboxLoaded ? "opacity-100" : "opacity-0"
+              }`}
+              onClick={(e) => e.stopPropagation()}
+              onLoad={() => setLightboxLoaded(true)}
+            />
+          </div>
 
           {selectedPhoto.caption && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-sm px-6 py-3 rounded-full">
@@ -199,7 +247,6 @@ const Gallery = () => {
             </div>
           )}
 
-          {/* Counter */}
           <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
             <p className="text-white text-sm font-sans">{selectedIndex! + 1} / {photos.length}</p>
           </div>

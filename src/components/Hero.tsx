@@ -69,16 +69,16 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-background via-cream to-background">
-      {/* Decorative elements */}
+      {/* Decorative elements with GPU hints */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-64 h-64 rounded-full bg-primary/5 blur-3xl animate-float" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-champagne/30 blur-3xl animate-float" style={{ animationDelay: "1.5s" }} />
-        <div className="absolute top-1/3 right-1/4 w-32 h-32 rounded-full bg-blush/20 blur-2xl animate-float" style={{ animationDelay: "0.5s" }} />
+        <div className="absolute top-20 left-10 w-40 md:w-64 h-40 md:h-64 rounded-full bg-primary/5 blur-3xl animate-float will-change-transform" />
+        <div className="absolute bottom-20 right-10 w-64 md:w-96 h-64 md:h-96 rounded-full bg-champagne/30 blur-3xl animate-float will-change-transform" style={{ animationDelay: "1.5s" }} />
+        <div className="absolute top-1/3 right-1/4 w-20 md:w-32 h-20 md:h-32 rounded-full bg-blush/20 blur-2xl animate-float will-change-transform" style={{ animationDelay: "0.5s" }} />
       </div>
 
-      {/* Ornamental borders */}
-      <div className="absolute top-8 left-8 right-8 bottom-8 border border-primary/20 rounded-lg pointer-events-none" />
-      <div className="absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
+      {/* Ornamental borders — hidden on small screens */}
+      <div className="hidden md:block absolute top-8 left-8 right-8 bottom-8 border border-primary/20 rounded-lg pointer-events-none" />
+      <div className="hidden md:block absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
         <p className="text-muted-foreground text-lg md:text-xl font-body tracking-[0.3em] uppercase mb-6 animate-fade-in">
@@ -104,8 +104,8 @@ const Hero = () => {
           {dateStr}
         </p>
 
-        {/* Countdown */}
-        <div className="grid grid-cols-4 gap-4 md:gap-8 max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
+        {/* Countdown — 2 cols on very small screens, 4 cols on sm+ */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:gap-8 max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
           {[
             { value: timeLeft.days, label: "Days" },
             { value: timeLeft.hours, label: "Hours" },
@@ -113,12 +113,12 @@ const Hero = () => {
             { value: timeLeft.seconds, label: "Seconds" },
           ].map(({ value, label }) => (
             <div key={label} className="text-center">
-              <div className="bg-card/80 backdrop-blur-sm border border-primary/20 rounded-lg p-4 md:p-6 shadow-soft">
+              <div className="bg-card/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 sm:p-4 md:p-6 shadow-soft">
                 <span className="font-display text-3xl md:text-5xl text-primary font-semibold">
                   {value.toString().padStart(2, "0")}
                 </span>
               </div>
-              <p className="text-muted-foreground text-sm md:text-base mt-2 font-body tracking-wider uppercase">
+              <p className="text-muted-foreground text-xs sm:text-sm md:text-base mt-2 font-body tracking-wider uppercase">
                 {label}
               </p>
             </div>
