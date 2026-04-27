@@ -147,6 +147,16 @@ export default function Gifts() {
     both: { label: "Cash & Kind", cls: "bg-pink-100 text-pink-800" },
   };
 
+  // Aggregate progress: sum of paid/pending payments per option, plus overall.
+  const totalsByOption = payments.reduce<Record<string, number>>((acc, p) => {
+    acc[p.gift_option_id] = (acc[p.gift_option_id] || 0) + Number(p.amount || 0);
+    return acc;
+  }, {});
+  const totalReceived = Object.values(totalsByOption).reduce((a, b) => a + b, 0) + giftWall.length * 0; // wall entries are unvalued
+  const totalTarget = giftOptions.reduce((sum, o) => sum + Number(o.target_amount || 0), 0);
+  const overallPct = totalTarget > 0 ? Math.min(100, Math.round((totalReceived / totalTarget) * 100)) : 0;
+  const formatGHS = (n: number) =>
+    new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 0 }).format(n);
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
