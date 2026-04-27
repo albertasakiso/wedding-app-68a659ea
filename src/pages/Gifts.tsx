@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send } from "lucide-react";
+import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry } from "@/lib/image-utils";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
@@ -28,9 +29,25 @@ interface RSVPEntry {
   created_at: string;
 }
 
+interface GiftOption {
+  id: string;
+  title: string;
+  description: string | null;
+  target_amount: number;
+}
+
+interface GiftPayment {
+  id: string;
+  amount: number;
+  gift_option_id: string;
+  status: string;
+}
+
 export default function Gifts() {
   const [giftWall, setGiftWall] = useState<GiftWallEntry[]>([]);
   const [rsvpList, setRsvpList] = useState<RSVPEntry[]>([]);
+  const [giftOptions, setGiftOptions] = useState<GiftOption[]>([]);
+  const [payments, setPayments] = useState<GiftPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -40,10 +57,11 @@ export default function Gifts() {
   const [donorMessage, setDonorMessage] = useState("");
   const [giftType, setGiftType] = useState("momo");
   const { ref: wallRef, isVisible: wallVisible } = useScrollReveal({ threshold: 0.1 });
+  const { ref: progressRef, isVisible: progressVisible } = useScrollReveal({ threshold: 0.1 });
 
   const fetchData = async () => {
     try {
-      const [wallRes, rsvpRes] = await Promise.all([
+      const [wallRes, rsvpRes, optionsRes, paymentsRes] = await Promise.all([
         supabase
           .from("gift_wall")
           .select("id, donor_name, gift_type, message, phone, created_at")
@@ -53,9 +71,18 @@ export default function Gifts() {
           .select("id, guest_name, phone, created_at")
           .eq("attending", true)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("gift_options")
+          .select("id, title, description, target_amount")
+          .eq("is_active", true),
+        supabase
+          .from("gift_payments")
+          .select("id, amount, gift_option_id, status"),
       ]);
       setGiftWall(wallRes.data || []);
       setRsvpList(rsvpRes.data || []);
+      setGiftOptions(optionsRes.data || []);
+      setPayments(paymentsRes.data || []);
     } catch {
       toast.error("Failed to load data");
     } finally {
@@ -120,6 +147,16 @@ export default function Gifts() {
     both: { label: "Cash & Kind", cls: "bg-pink-100 text-pink-800" },
   };
 
+  // Aggregate progress: sum of paid/pending payments per option, plus overall.
+  const totalsByOption = payments.reduce<Record<string, number>>((acc, p) => {
+    acc[p.gift_option_id] = (acc[p.gift_option_id] || 0) + Number(p.amount || 0);
+    return acc;
+  }, {});
+  const totalReceived = Object.values(totalsByOption).reduce((a, b) => a + b, 0) + giftWall.length * 0; // wall entries are unvalued
+  const totalTarget = giftOptions.reduce((sum, o) => sum + Number(o.target_amount || 0), 0);
+  const overallPct = totalTarget > 0 ? Math.min(100, Math.round((totalReceived / totalTarget) * 100)) : 0;
+  const formatGHS = (n: number) =>
+    new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 0 }).format(n);
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -133,6 +170,48 @@ export default function Gifts() {
               Your presence is our greatest gift. If you wish to bless us further, you can send a gift via any of the options below.
             </p>
           </div>
+
+          {/* Gift Goal Progress */}
+          {giftOptions.length > 0 && totalTarget > 0 && (
+            <div
+              ref={progressRef}
+              className={`max-w-2xl mx-auto mb-16 transition-all duration-700 ${
+                progressVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+            >
+              <div className="rounded-2xl bg-card border border-primary/10 p-6 md:p-8 shadow-soft">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    <h3 className="font-display text-xl text-foreground">Our Wedding Wishlist</h3>
+                  </div>
+                  <span className="text-sm font-body text-muted-foreground">
+                    {formatGHS(totalReceived)} <span className="text-primary/60">/ {formatGHS(totalTarget)}</span>
+                  </span>
+                </div>
+                <Progress value={overallPct} className="h-3 mb-2" />
+                <p className="text-xs text-muted-foreground font-body text-right">{overallPct}% funded · {payments.length} contributions</p>
+
+                <div className="mt-6 space-y-4">
+                  {giftOptions.map((opt) => {
+                    const received = totalsByOption[opt.id] || 0;
+                    const pct = Number(opt.target_amount) > 0 ? Math.min(100, Math.round((received / Number(opt.target_amount)) * 100)) : 0;
+                    return (
+                      <div key={opt.id}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-body text-sm text-foreground font-medium">{opt.title}</span>
+                          <span className="font-body text-xs text-muted-foreground">
+                            {formatGHS(received)} / {formatGHS(Number(opt.target_amount))}
+                          </span>
+                        </div>
+                        <Progress value={pct} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Payment Details */}
           <div className="max-w-xl mx-auto space-y-5 mb-16">
