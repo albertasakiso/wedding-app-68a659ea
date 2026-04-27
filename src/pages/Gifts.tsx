@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { anonymizeEntry } from "@/lib/image-utils";
+import { anonymizeEntry, formatGHS } from "@/lib/format-utils";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 
 interface GiftWallEntry {
   id: string;
@@ -54,6 +55,7 @@ export default function Gifts() {
   const [confirmed, setConfirmed] = useState(false);
   const [donorName, setDonorName] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
+  const [donorEmail, setDonorEmail] = useState("");
   const [donorMessage, setDonorMessage] = useState("");
   const [giftType, setGiftType] = useState("momo");
   const { ref: wallRef, isVisible: wallVisible } = useScrollReveal({ threshold: 0.1 });
@@ -92,19 +94,9 @@ export default function Gifts() {
 
   useEffect(() => {
     fetchData();
-    const giftChannel = supabase
-      .channel("gift-wall-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "gift_wall" }, () => fetchData())
-      .subscribe();
-    const rsvpChannel = supabase
-      .channel("rsvp-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "rsvps" }, () => fetchData())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(giftChannel);
-      supabase.removeChannel(rsvpChannel);
-    };
   }, []);
+  useRealtimeTable("gift_wall", fetchData, "gifts-page-gift-wall");
+  useRealtimeTable("rsvps", fetchData, "gifts-page-rsvps");
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -118,16 +110,32 @@ export default function Gifts() {
     if (!donorPhone.trim()) return toast.error("Please enter your phone number");
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("payment-api", {
-        body: {
-          action: "record-manual-gift",
-          donor_name: donorName.trim(),
-          phone: donorPhone.trim(),
-          gift_type: giftType,
-          message: donorMessage.trim() || null,
-        },
+      const trimmedEmail = donorEmail.trim();
+      const { error } = await supabase.from("gift_wall").insert({
+        donor_name: donorName.trim(),
+        phone: donorPhone.trim(),
+        email: trimmedEmail || null,
+        gift_type: giftType,
+        message: donorMessage.trim() || null,
       });
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      if (error) throw error;
+
+      // Fire-and-forget thank-you email if donor provided one
+      if (trimmedEmail) {
+        supabase.functions
+          .invoke("email-notifications", {
+            body: {
+              action: "send-gift-thankyou",
+              donor_name: donorName.trim(),
+              donor_email: trimmedEmail,
+              amount: "",
+              currency: "GHS",
+              gift_title: "Wedding Gift",
+            },
+          })
+          .catch(() => {});
+      }
+
       setConfirmed(true);
       toast.success("Thank you for your gift! 🎉");
       fetchData();
@@ -152,11 +160,9 @@ export default function Gifts() {
     acc[p.gift_option_id] = (acc[p.gift_option_id] || 0) + Number(p.amount || 0);
     return acc;
   }, {});
-  const totalReceived = Object.values(totalsByOption).reduce((a, b) => a + b, 0) + giftWall.length * 0; // wall entries are unvalued
+  const totalReceived = Object.values(totalsByOption).reduce((a, b) => a + b, 0);
   const totalTarget = giftOptions.reduce((sum, o) => sum + Number(o.target_amount || 0), 0);
   const overallPct = totalTarget > 0 ? Math.min(100, Math.round((totalReceived / totalTarget) * 100)) : 0;
-  const formatGHS = (n: number) =>
-    new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 0 }).format(n);
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -310,7 +316,7 @@ export default function Gifts() {
                   Your gift has been recorded. We truly appreciate your generosity!
                 </p>
                 <Button
-                  onClick={() => { setConfirmed(false); setDonorName(""); setDonorPhone(""); setDonorMessage(""); setGiftType("momo"); }}
+                  onClick={() => { setConfirmed(false); setDonorName(""); setDonorPhone(""); setDonorEmail(""); setDonorMessage(""); setGiftType("momo"); }}
                   variant="outline"
                   className="mt-4"
                 >
@@ -326,6 +332,10 @@ export default function Gifts() {
                 <div>
                   <Label className="font-body text-sm">Phone Number *</Label>
                   <Input value={donorPhone} onChange={(e) => setDonorPhone(e.target.value)} placeholder="+233 XX XXX XXXX" type="tel" />
+                </div>
+                <div>
+                  <Label className="font-body text-sm">Email (optional, for thank-you)</Label>
+                  <Input value={donorEmail} onChange={(e) => setDonorEmail(e.target.value)} placeholder="you@example.com" type="email" />
                 </div>
                 <div>
                   <Label className="font-body text-sm">Gift Type *</Label>
