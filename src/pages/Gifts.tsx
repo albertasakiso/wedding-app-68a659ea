@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send } from "lucide-react";
+import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry } from "@/lib/image-utils";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 
@@ -28,9 +29,25 @@ interface RSVPEntry {
   created_at: string;
 }
 
+interface GiftOption {
+  id: string;
+  title: string;
+  description: string | null;
+  target_amount: number;
+}
+
+interface GiftPayment {
+  id: string;
+  amount: number;
+  gift_option_id: string;
+  status: string;
+}
+
 export default function Gifts() {
   const [giftWall, setGiftWall] = useState<GiftWallEntry[]>([]);
   const [rsvpList, setRsvpList] = useState<RSVPEntry[]>([]);
+  const [giftOptions, setGiftOptions] = useState<GiftOption[]>([]);
+  const [payments, setPayments] = useState<GiftPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -40,6 +57,7 @@ export default function Gifts() {
   const [donorMessage, setDonorMessage] = useState("");
   const [giftType, setGiftType] = useState("momo");
   const { ref: wallRef, isVisible: wallVisible } = useScrollReveal({ threshold: 0.1 });
+  const { ref: progressRef, isVisible: progressVisible } = useScrollReveal({ threshold: 0.1 });
 
   const fetchData = async () => {
     try {
