@@ -60,8 +60,5 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export function anonymizeEntry(name: string, phone?: string | null): string {
-  const first4 = (name || "").replace(/\s+/g, "").substring(0, 4).toUpperCase();
-  const last4 = phone ? phone.replace(/\D/g, "").slice(-4) : "****";
-  return `${first4}....${last4}`;
-}
+// Re-export for backward compatibility — canonical home is format-utils.
+export { anonymizeEntry } from "./format-utils";

@@ -3,8 +3,5 @@ project_id = "oudlivqtsurpdafguwqr"
 [functions.admin-api]
 verify_jwt = false
 
-[functions.payment-api]
-verify_jwt = false
-
 [functions.email-notifications]
 verify_jwt = false

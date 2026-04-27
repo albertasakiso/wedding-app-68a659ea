@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import PhotoUploadCard from "@/components/PhotoUploadCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -142,6 +143,8 @@ const Gallery = () => {
               A collection of our favorite memories together. More photos will be added after the wedding!
             </p>
           </div>
+
+          <PhotoUploadCard onUploaded={fetchPhotos} />
 
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">

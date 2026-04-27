@@ -45,6 +45,21 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
   const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null, gift_wall = [] } = data || {};
 
+  // Single source of truth — drives both tab triggers and tab content.
+  const ADMIN_TABS = [
+    { value: "overview", label: "Overview", icon: LayoutDashboard, render: () => <OverviewTab rsvps={rsvps} /> },
+    { value: "rsvps", label: "RSVPs", icon: Users, render: () => <RSVPsTab rsvps={rsvps} onRefresh={handleRefresh} /> },
+    { value: "events", label: "Events", icon: Calendar, render: () => <EventsTab events={events} onRefresh={handleRefresh} /> },
+    { value: "venue", label: "Venue", icon: MapPin, render: () => <VenueTab venue={venue} onRefresh={handleRefresh} /> },
+    { value: "gallery", label: "Gallery", icon: Image, render: () => <GalleryTab photos={photos} onRefresh={handleRefresh} /> },
+    { value: "messages", label: "Messages", icon: MessageSquare, render: () => <MessagesTab rsvps={rsvps} /> },
+    { value: "gifts", label: "Gifts", icon: Gift, render: () => <GiftsTab gifts={gift_options} payments={gift_payments} giftWall={gift_wall} onRefresh={handleRefresh} /> },
+    { value: "payment-settings", label: "Payments", icon: CreditCard, render: () => <PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /> },
+    { value: "settings", label: "Settings", icon: Settings, render: () => <SettingsTab settings={settings} onRefresh={handleRefresh} /> },
+    { value: "email-settings", label: "Notifications", icon: Bell, render: () => <EmailSettingsTab settings={email_settings} onRefresh={handleRefresh} /> },
+    { value: "email-list", label: "Email List", icon: Mail, render: () => <EmailListTab subscribers={email_list} onRefresh={handleRefresh} /> },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-primary/10 bg-card">
@@ -59,30 +74,19 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Tabs defaultValue="overview">
           <TabsList className="mb-6 flex-wrap h-auto gap-1">
-            <TabsTrigger value="overview" className="gap-2"><LayoutDashboard className="h-4 w-4" /> Overview</TabsTrigger>
-            <TabsTrigger value="rsvps" className="gap-2"><Users className="h-4 w-4" /> RSVPs</TabsTrigger>
-            <TabsTrigger value="events" className="gap-2"><Calendar className="h-4 w-4" /> Events</TabsTrigger>
-            <TabsTrigger value="venue" className="gap-2"><MapPin className="h-4 w-4" /> Venue</TabsTrigger>
-            <TabsTrigger value="gallery" className="gap-2"><Image className="h-4 w-4" /> Gallery</TabsTrigger>
-            <TabsTrigger value="messages" className="gap-2"><MessageSquare className="h-4 w-4" /> Messages</TabsTrigger>
-            <TabsTrigger value="gifts" className="gap-2"><Gift className="h-4 w-4" /> Gifts</TabsTrigger>
-            <TabsTrigger value="payment-settings" className="gap-2"><CreditCard className="h-4 w-4" /> Payments</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2"><Settings className="h-4 w-4" /> Settings</TabsTrigger>
-            <TabsTrigger value="email-settings" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
-            <TabsTrigger value="email-list" className="gap-2"><Mail className="h-4 w-4" /> Email List</TabsTrigger>
+            {ADMIN_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-2">
+                  <Icon className="h-4 w-4" /> {tab.label}
+                </TabsTrigger>
+              );
+            })}
           </TabsList>
 
-          <TabsContent value="overview"><OverviewTab rsvps={rsvps} /></TabsContent>
-          <TabsContent value="rsvps"><RSVPsTab rsvps={rsvps} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="events"><EventsTab events={events} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="venue"><VenueTab venue={venue} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="gallery"><GalleryTab photos={photos} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="messages"><MessagesTab rsvps={rsvps} /></TabsContent>
-          <TabsContent value="gifts"><GiftsTab gifts={gift_options} payments={gift_payments} giftWall={gift_wall} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="payment-settings"><PaymentSettingsTab settings={payment_settings} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="settings"><SettingsTab settings={settings} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="email-settings"><EmailSettingsTab settings={email_settings} onRefresh={handleRefresh} /></TabsContent>
-          <TabsContent value="email-list"><EmailListTab subscribers={email_list} onRefresh={handleRefresh} /></TabsContent>
+          {ADMIN_TABS.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value}>{tab.render()}</TabsContent>
+          ))}
         </Tabs>
       </main>
     </div>

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import ShareInvite from "@/components/ShareInvite";
 
 interface SiteSettings {
   couple_names: string;
@@ -155,6 +156,7 @@ const Hero = () => {
           >
             View Details
           </Button>
+          <ShareInvite coupleNames={settings.couple_names} dateStr={dateStr} />
         </div>
       </div>
 
