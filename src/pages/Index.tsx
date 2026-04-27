@@ -2,6 +2,7 @@ import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
 import EventTimeline from "@/components/EventTimeline";
 import VenueSection from "@/components/VenueSection";
+import DressCode from "@/components/DressCode";
 import GalleryPreview from "@/components/GalleryPreview";
 import MessagesWall from "@/components/MessagesWall";
 import Footer from "@/components/Footer";
@@ -16,6 +17,7 @@ const Index = () => {
         </div>
         <EventTimeline />
         <VenueSection />
+        <DressCode />
         <GalleryPreview />
         <MessagesWall />
       </main>
