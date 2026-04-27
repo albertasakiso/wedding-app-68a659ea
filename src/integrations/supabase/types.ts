@@ -233,6 +233,7 @@ export type Database = {
         Row: {
           created_at: string
           donor_name: string
+          email: string | null
           gift_type: string
           id: string
           is_visible: boolean
@@ -242,6 +243,7 @@ export type Database = {
         Insert: {
           created_at?: string
           donor_name: string
+          email?: string | null
           gift_type?: string
           id?: string
           is_visible?: boolean
@@ -251,6 +253,7 @@ export type Database = {
         Update: {
           created_at?: string
           donor_name?: string
+          email?: string | null
           gift_type?: string
           id?: string
           is_visible?: boolean
@@ -267,10 +270,6 @@ export type Database = {
           currency: string
           id: string
           momo_enabled: boolean
-          paystack_public_key: string | null
-          paystack_secret_key: string | null
-          stripe_public_key: string | null
-          stripe_secret_key: string | null
         }
         Insert: {
           bank_enabled?: boolean
@@ -279,10 +278,6 @@ export type Database = {
           currency?: string
           id?: string
           momo_enabled?: boolean
-          paystack_public_key?: string | null
-          paystack_secret_key?: string | null
-          stripe_public_key?: string | null
-          stripe_secret_key?: string | null
         }
         Update: {
           bank_enabled?: boolean
@@ -291,10 +286,6 @@ export type Database = {
           currency?: string
           id?: string
           momo_enabled?: boolean
-          paystack_public_key?: string | null
-          paystack_secret_key?: string | null
-          stripe_public_key?: string | null
-          stripe_secret_key?: string | null
         }
         Relationships: []
       }
@@ -302,11 +293,9 @@ export type Database = {
         Row: {
           attending: boolean | null
           created_at: string
-          dietary_restrictions: string | null
           email: string | null
           guest_name: string
           id: string
-          meal_preference: string | null
           message: string | null
           phone: string | null
           plus_one_name: string | null
@@ -314,11 +303,9 @@ export type Database = {
         Insert: {
           attending?: boolean | null
           created_at?: string
-          dietary_restrictions?: string | null
           email?: string | null
           guest_name: string
           id?: string
-          meal_preference?: string | null
           message?: string | null
           phone?: string | null
           plus_one_name?: string | null
@@ -326,11 +313,9 @@ export type Database = {
         Update: {
           attending?: boolean | null
           created_at?: string
-          dietary_restrictions?: string | null
           email?: string | null
           guest_name?: string
           id?: string
-          meal_preference?: string | null
           message?: string | null
           phone?: string | null
           plus_one_name?: string | null
@@ -341,6 +326,8 @@ export type Database = {
         Row: {
           couple_names: string
           created_at: string
+          dress_code: string | null
+          dress_code_colors: string[] | null
           hero_image_url: string | null
           id: string
           tagline: string | null
@@ -349,6 +336,8 @@ export type Database = {
         Insert: {
           couple_names?: string
           created_at?: string
+          dress_code?: string | null
+          dress_code_colors?: string[] | null
           hero_image_url?: string | null
           id?: string
           tagline?: string | null
@@ -357,6 +346,8 @@ export type Database = {
         Update: {
           couple_names?: string
           created_at?: string
+          dress_code?: string | null
+          dress_code_colors?: string[] | null
           hero_image_url?: string | null
           id?: string
           tagline?: string | null
