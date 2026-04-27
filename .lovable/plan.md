@@ -1,72 +1,45 @@
+## Audit: Unconsolidated Modules & FRS Gaps
 
+### Part A — Unconsolidated Modules / Tech Debt
 
-## Visual Polish, Performance & Mobile Improvements
+These are already built but live as duplicated or scattered logic. Cleanup is optional but recommended.
 
-### 1. Homepage — Entrance Animations & Lazy Loading
+| Issue | Location | Consolidation |
+|---|---|---|
+| `payment-api` edge function still exists from old Paystack/Stripe flow but Gifts page now writes directly to `gift_wall` | `supabase/functions/payment-api/index.ts` | Delete or repurpose — currently dead code |
+| `payment_settings` table stores Paystack/Stripe keys never used; only `momo_enabled/card_enabled/bank_enabled` flags read | DB + `PaymentSettingsTab.tsx` | Drop unused key columns; keep only toggles + manual account fields |
+| `rsvps.meal_preference` and `rsvps.dietary_restrictions` columns unused (removed from form per memory) | DB | Drop columns or document as legacy |
+| Realtime subscriptions duplicated in `Gifts.tsx` (gift + rsvp channels manually) and elsewhere | `src/pages/Gifts.tsx` | Extract `useRealtimeTable(table, onChange)` hook |
+| `anonymizeEntry` lives in `image-utils.ts` despite being string logic | `src/lib/image-utils.ts` | Move to `src/lib/format-utils.ts` |
+| Admin tab list hardcoded in `AdminDashboard.tsx` | `AdminDashboard.tsx` | Extract `ADMIN_TABS` config array driving both `TabsList` and `TabsContent` |
+| Scroll-reveal pattern partially adopted — `Gifts` uses it, `EventTimeline`/`Venue`/`GalleryPreview` use ad-hoc IntersectionObserver | several components | Standardize all on `useScrollReveal` |
+| Brevo email sending scattered across `email-notifications` function calls; no shared template renderer | `supabase/functions/email-notifications/` | Extract `renderTemplate(name, vars)` helper |
 
-**`src/components/Hero.tsx`**:
-- Add `will-change-transform` to floating decorative blobs for smoother GPU-accelerated animation
-- On mobile, reduce blob sizes and hide the ornamental double border (too tight on small screens)
-- Make countdown grid `grid-cols-2 gap-3` on very small screens (`<400px`) so numbers don't squeeze
+### Part B — FRS Not Yet Implemented (from prior plans / memory)
 
-**`src/components/EventTimeline.tsx`**:
-- Add scroll-triggered fade-in using Intersection Observer (wrap each timeline card in a component that fades in when visible)
-- On mobile, the timeline dots overlap with text — increase `ml-24` to `ml-28` and reduce icon container from `w-16 h-16` to `w-12 h-12` on small screens
+1. **Admin RSVP reminder send-all** — memory mentions "Admin RSVP reminder button"; verify it's wired to the Brevo function and shows per-guest send status.
+2. **Gift thank-you email** — `email_settings.gift_thankyou_subject/message` exist in DB but no trigger sends them when a `gift_wall` row is inserted with an email. Currently `gift_wall` has no email column → either add `email` column or skip silently.
+3. **RSVP edit / cancel link** — guests have no way to update or cancel an RSVP once submitted (no token/magic link).
+4. **Photo upload from guests** — `gallery_photos` table allows public INSERT, but the public Gallery page only displays; no upload UI for guests.
+5. **Countdown auto-hide post-wedding** — Hero countdown still runs after May 2, 2026; needs "We did it!" state.
 
-**`src/components/VenueSection.tsx`**:
-- Lazy-load the OpenStreetMap iframe with `loading="lazy"` (already done) + add a placeholder skeleton while loading
-- Hotel cards: add subtle hover scale effect
+### Part C — New FRS Worth Adding
 
-**`src/components/GalleryPreview.tsx`**:
-- Add `loading="lazy"` (already done) + add fade-in on image load using `onLoad` state
-- Add scroll-triggered animation for the section entry
+1. **Seating / Table assignment** — admin assigns table number per RSVP; guest can look up their table via phone number on a `/seating` page.
+2. **Live event-day timeline (mobile-first "day-of" view)** — strip-down `/today` page that highlights the current/next event based on `events.event_time`.
+3. **Multi-language toggle (EN / Twi)** — wedding is in Ghana; add i18n with `react-i18next` and a header switcher.
+4. **Share / WhatsApp invite** — "Share invitation" button on Hero that opens WhatsApp/SMS/email with prefilled link + couple names.
+5. **Guest dress code section** — new `dress_code` field in `site_settings` rendered as a card on the homepage with color swatches.
+6. **Live photo stream / hashtag wall** — guests upload photos during the event; appear instantly on a `/live` projector view.
+7. **QR check-in** — admin generates a QR per RSVP for door check-in; check-in status saved to `rsvps.checked_in_at`.
+8. **Gift goal progress bars** — `gift_options` already has `target_amount` but Gifts page doesn't show progress; aggregate `gift_wall` totals per gift type and render progress.
+9. **Guestbook signature pad** — canvas-based signature capture saved as PNG to `gallery_photos` or a new `guestbook` table.
+10. **Push / email reminders** — scheduled Brevo job: T-30, T-7, T-1 day reminders to attending guests.
+11. **PWA + offline support** — installable wedding app with cached venue map and timeline.
+12. **Analytics dashboard** — admin chart of RSVPs over time, attending vs not, gift totals per day.
 
-**`src/components/MessagesWall.tsx`**:
-- Pause animation on hover (add `whileHover` or CSS `hover:animation-play-state: paused` equivalent via framer-motion)
-- Add `will-change-transform` to the motion div for smoother scrolling
-- On mobile (single column visible), ensure the column is centered
+### Recommendation
 
-### 2. Gallery Page — Performance & Polish
+Pick **one cleanup track** (drop dead `payment-api` + unused DB columns + standardize scroll-reveal) and **one feature track** (gift goal progress bars + countdown post-wedding state are highest impact, lowest effort).
 
-**`src/pages/Gallery.tsx`**:
-- Add image skeleton/placeholder (shimmer effect) while images load using `onLoad` state toggle
-- Add fade-in transition when each image loads (`opacity-0 → opacity-100`)
-- Lightbox: add swipe gesture support on mobile using touch events (touchstart/touchend delta)
-- Lightbox: add image loading indicator for large photos
-- Preload adjacent images in lightbox for faster navigation
-
-### 3. Gifts Page — Mobile & Visual Polish
-
-**`src/pages/Gifts.tsx`**:
-- Payment cards: add subtle `hover:scale-[1.01]` and `transition-transform` for tactile feel
-- Copy button: add a brief highlight animation on the copied number (flash the text primary color)
-- Celebration Wall: on mobile, stack columns vertically with reduced max-height (`max-h-[300px]`) so both sections are visible without excessive scrolling
-- Add section fade-in animations on scroll
-
-### 4. Shared: Scroll Animation Utility
-
-**`src/hooks/useScrollReveal.ts`** (new):
-- Small custom hook using Intersection Observer that returns a `ref` and `isVisible` boolean
-- Used across EventTimeline, VenueSection, GalleryPreview, and Gifts page for consistent scroll-triggered fade-in animations
-- Configurable threshold and rootMargin
-
-### 5. Tailwind Config — New Utility Animations
-
-**`tailwind.config.ts`**:
-- Add `scale-in` keyframe (from `scale(0.95) opacity(0)` to `scale(1) opacity(1)`)
-- Add `shimmer` keyframe for image loading placeholder
-
-### Files Summary
-
-| File | Change |
-|------|--------|
-| `src/hooks/useScrollReveal.ts` | New: reusable Intersection Observer hook |
-| `tailwind.config.ts` | Add `scale-in` and `shimmer` keyframes |
-| `src/components/Hero.tsx` | GPU hints, mobile blob sizing, responsive countdown |
-| `src/components/EventTimeline.tsx` | Scroll-reveal animation, mobile spacing fix |
-| `src/components/VenueSection.tsx` | Iframe skeleton, hover effects |
-| `src/components/GalleryPreview.tsx` | Image fade-in on load |
-| `src/components/MessagesWall.tsx` | Pause on hover, GPU hints, mobile centering |
-| `src/pages/Gallery.tsx` | Image skeletons, lightbox swipe + preload |
-| `src/pages/Gifts.tsx` | Card hover effects, mobile wall layout, scroll animations |
-
+Reply with which items you want and I'll implement them.
