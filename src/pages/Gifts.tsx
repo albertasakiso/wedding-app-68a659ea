@@ -61,7 +61,7 @@ export default function Gifts() {
 
   const fetchData = async () => {
     try {
-      const [wallRes, rsvpRes] = await Promise.all([
+      const [wallRes, rsvpRes, optionsRes, paymentsRes] = await Promise.all([
         supabase
           .from("gift_wall")
           .select("id, donor_name, gift_type, message, phone, created_at")
@@ -71,9 +71,18 @@ export default function Gifts() {
           .select("id, guest_name, phone, created_at")
           .eq("attending", true)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("gift_options")
+          .select("id, title, description, target_amount")
+          .eq("is_active", true),
+        supabase
+          .from("gift_payments")
+          .select("id, amount, gift_option_id, status"),
       ]);
       setGiftWall(wallRes.data || []);
       setRsvpList(rsvpRes.data || []);
+      setGiftOptions(optionsRes.data || []);
+      setPayments(paymentsRes.data || []);
     } catch {
       toast.error("Failed to load data");
     } finally {
