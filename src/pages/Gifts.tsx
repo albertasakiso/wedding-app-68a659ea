@@ -171,6 +171,48 @@ export default function Gifts() {
             </p>
           </div>
 
+          {/* Gift Goal Progress */}
+          {giftOptions.length > 0 && totalTarget > 0 && (
+            <div
+              ref={progressRef}
+              className={`max-w-2xl mx-auto mb-16 transition-all duration-700 ${
+                progressVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+              }`}
+            >
+              <div className="rounded-2xl bg-card border border-primary/10 p-6 md:p-8 shadow-soft">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    <h3 className="font-display text-xl text-foreground">Our Wedding Wishlist</h3>
+                  </div>
+                  <span className="text-sm font-body text-muted-foreground">
+                    {formatGHS(totalReceived)} <span className="text-primary/60">/ {formatGHS(totalTarget)}</span>
+                  </span>
+                </div>
+                <Progress value={overallPct} className="h-3 mb-2" />
+                <p className="text-xs text-muted-foreground font-body text-right">{overallPct}% funded · {payments.length} contributions</p>
+
+                <div className="mt-6 space-y-4">
+                  {giftOptions.map((opt) => {
+                    const received = totalsByOption[opt.id] || 0;
+                    const pct = Number(opt.target_amount) > 0 ? Math.min(100, Math.round((received / Number(opt.target_amount)) * 100)) : 0;
+                    return (
+                      <div key={opt.id}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-body text-sm text-foreground font-medium">{opt.title}</span>
+                          <span className="font-body text-xs text-muted-foreground">
+                            {formatGHS(received)} / {formatGHS(Number(opt.target_amount))}
+                          </span>
+                        </div>
+                        <Progress value={pct} className="h-2" />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Payment Details */}
           <div className="max-w-xl mx-auto space-y-5 mb-16">
             {/* MTN MoMo */}
