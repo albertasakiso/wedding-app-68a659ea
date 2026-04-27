@@ -15,10 +15,11 @@ interface TimeLeft {
   hours: number;
   minutes: number;
   seconds: number;
+  isPast: boolean;
 }
 
 const Hero = () => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
   const [settings, setSettings] = useState<SiteSettings>({
     couple_names: "Albert & Ruby",
     wedding_date: "2026-05-02T15:00:00Z",
@@ -55,7 +56,10 @@ const Hero = () => {
           hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
           minutes: Math.floor((difference / 1000 / 60) % 60),
           seconds: Math.floor((difference / 1000) % 60),
+          isPast: false,
         });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: true });
       }
     };
     calculateTimeLeft();
@@ -104,26 +108,40 @@ const Hero = () => {
           {dateStr}
         </p>
 
-        {/* Countdown — 2 cols on very small screens, 4 cols on sm+ */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:gap-8 max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
-          {[
-            { value: timeLeft.days, label: "Days" },
-            { value: timeLeft.hours, label: "Hours" },
-            { value: timeLeft.minutes, label: "Minutes" },
-            { value: timeLeft.seconds, label: "Seconds" },
-          ].map(({ value, label }) => (
-            <div key={label} className="text-center">
-              <div className="bg-card/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 sm:p-4 md:p-6 shadow-soft">
-                <span className="font-display text-3xl md:text-5xl text-primary font-semibold">
-                  {value.toString().padStart(2, "0")}
-                </span>
-              </div>
-              <p className="text-muted-foreground text-xs sm:text-sm md:text-base mt-2 font-body tracking-wider uppercase">
-                {label}
+        {/* Countdown OR post-wedding celebration */}
+        {timeLeft.isPast ? (
+          <div className="max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
+            <div className="bg-card/80 backdrop-blur-sm border border-primary/30 rounded-2xl p-8 md:p-10 shadow-elegant text-center">
+              <Heart className="w-12 h-12 text-primary fill-primary/30 mx-auto mb-4 animate-pulse" />
+              <p className="font-display text-3xl md:text-4xl text-primary font-semibold mb-2">
+                We did it!
+              </p>
+              <p className="text-muted-foreground font-body text-base md:text-lg">
+                Thank you for celebrating with us. Share your memories in the gallery below.
               </p>
             </div>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:gap-8 max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
+            {[
+              { value: timeLeft.days, label: "Days" },
+              { value: timeLeft.hours, label: "Hours" },
+              { value: timeLeft.minutes, label: "Minutes" },
+              { value: timeLeft.seconds, label: "Seconds" },
+            ].map(({ value, label }) => (
+              <div key={label} className="text-center">
+                <div className="bg-card/80 backdrop-blur-sm border border-primary/20 rounded-lg p-3 sm:p-4 md:p-6 shadow-soft">
+                  <span className="font-display text-3xl md:text-5xl text-primary font-semibold">
+                    {value.toString().padStart(2, "0")}
+                  </span>
+                </div>
+                <p className="text-muted-foreground text-xs sm:text-sm md:text-base mt-2 font-body tracking-wider uppercase">
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.8s" }}>
           <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-display shadow-elegant">
