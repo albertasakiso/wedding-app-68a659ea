@@ -10,10 +10,6 @@ import { Save, Loader2 } from "lucide-react";
 
 interface PaymentSettingsData {
   id?: string;
-  paystack_public_key: string | null;
-  paystack_secret_key: string | null;
-  stripe_public_key: string | null;
-  stripe_secret_key: string | null;
   momo_enabled: boolean;
   card_enabled: boolean;
   bank_enabled: boolean;
@@ -27,10 +23,6 @@ interface PaymentSettingsTabProps {
 
 export default function PaymentSettingsTab({ settings, onRefresh }: PaymentSettingsTabProps) {
   const [form, setForm] = useState<PaymentSettingsData>({
-    paystack_public_key: "",
-    paystack_secret_key: "",
-    stripe_public_key: "",
-    stripe_secret_key: "",
     momo_enabled: true,
     card_enabled: true,
     bank_enabled: true,
@@ -40,7 +32,7 @@ export default function PaymentSettingsTab({ settings, onRefresh }: PaymentSetti
 
   useEffect(() => {
     if (settings) {
-      setForm({ ...form, ...settings });
+      setForm((prev) => ({ ...prev, ...settings }));
     }
   }, [settings]);
 
@@ -64,59 +56,12 @@ export default function PaymentSettingsTab({ settings, onRefresh }: PaymentSetti
     <div className="space-y-6 max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="font-display text-lg">Paystack (Ghana — MoMo, Cards, Bank)</CardTitle>
+          <CardTitle className="font-display text-lg">Accepted Payment Methods</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>Paystack Public Key</Label>
-            <Input
-              value={form.paystack_public_key || ""}
-              onChange={(e) => setForm({ ...form, paystack_public_key: e.target.value })}
-              placeholder="pk_live_..."
-            />
-          </div>
-          <div>
-            <Label>Paystack Secret Key</Label>
-            <Input
-              type="password"
-              value={form.paystack_secret_key || ""}
-              onChange={(e) => setForm({ ...form, paystack_secret_key: e.target.value })}
-              placeholder="sk_live_..."
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">Stripe (International Cards)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Stripe Public Key</Label>
-            <Input
-              value={form.stripe_public_key || ""}
-              onChange={(e) => setForm({ ...form, stripe_public_key: e.target.value })}
-              placeholder="pk_live_..."
-            />
-          </div>
-          <div>
-            <Label>Stripe Secret Key</Label>
-            <Input
-              type="password"
-              value={form.stripe_secret_key || ""}
-              onChange={(e) => setForm({ ...form, stripe_secret_key: e.target.value })}
-              placeholder="sk_live_..."
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">Payment Methods</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Toggle which payment options appear on the public Gifts page. Account details are managed in the Gifts page itself (manual MoMo/Bank).
+          </p>
           <div className="flex items-center justify-between">
             <Label>Mobile Money (MoMo)</Label>
             <Switch checked={form.momo_enabled} onCheckedChange={(c) => setForm({ ...form, momo_enabled: c })} />

@@ -62,10 +62,10 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
   };
 
   const exportCSV = () => {
-    const headers = ["Name", "Email", "Phone", "Attending", "Plus One", "Meal", "Dietary", "Message", "Date"];
+    const headers = ["Name", "Email", "Phone", "Attending", "Plus One", "Message", "Date"];
     const rows = rsvps.map((r) => [
       r.guest_name, r.email || "", r.phone || "", r.attending ? "Yes" : "No",
-      r.plus_one_name || "", r.meal_preference || "", r.dietary_restrictions || "",
+      r.plus_one_name || "",
       r.message || "", new Date(r.created_at).toLocaleDateString(),
     ]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
@@ -111,7 +111,6 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
               <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Plus One</TableHead>
-              <TableHead>Meal</TableHead>
               <TableHead>Message</TableHead>
               <TableHead className="w-12"></TableHead>
             </TableRow>
@@ -119,7 +118,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No RSVPs found
                 </TableCell>
               </TableRow>
@@ -135,7 +134,6 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>{r.plus_one_name || "—"}</TableCell>
-                  <TableCell className="capitalize">{r.meal_preference || "—"}</TableCell>
                   <TableCell className="max-w-[200px] truncate">{r.message || "—"}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => handleDelete(r.id, r.guest_name)}>

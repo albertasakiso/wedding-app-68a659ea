@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
-import { anonymizeEntry } from "@/lib/image-utils";
+import { anonymizeEntry } from "@/lib/format-utils";
 import { MessageCircle } from "lucide-react";
 
 interface RSVPMessage {
