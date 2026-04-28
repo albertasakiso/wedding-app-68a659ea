@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import PhotoUploadCard from "@/components/PhotoUploadCard";
@@ -62,14 +63,8 @@ const Gallery = () => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchPhotos();
-    const channel = supabase
-      .channel("gallery-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "gallery_photos" }, () => fetchPhotos())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchPhotos]);
+  useEffect(() => { fetchPhotos(); }, [fetchPhotos]);
+  useRealtimeTable("gallery_photos", fetchPhotos, "gallery-realtime");
 
   const navigatePhoto = useCallback((direction: number) => {
     setSelectedIndex((prev) => {
@@ -180,7 +175,7 @@ const Gallery = () => {
               </div>
               <div className="text-center mt-12">
                 <p className="text-muted-foreground font-body text-lg">
-                  Photos coming soon! Check back after our engagement shoot.
+                  Be the first to share a moment — upload above.
                 </p>
               </div>
             </div>
