@@ -14,7 +14,7 @@ const defaultEvents = [
   { id: "4", event_time: "2026-05-02T20:00:00Z", title: "Dancing & Celebration", description: "Dance the night away under the stars.", location: "Grand Ballroom & Terrace" },
 ];
 
-function TimelineCard({ event, index }: { event: typeof defaultEvents[0]; index: number }) {
+function TimelineCard({ event, index, isActive }: { event: typeof defaultEvents[0]; index: number; isActive: boolean }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.2 });
   const isEven = index % 2 === 0;
   const icons = [Church, Martini, UtensilsCrossed, Music];
@@ -32,15 +32,22 @@ function TimelineCard({ event, index }: { event: typeof defaultEvents[0]; index:
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      <div className="absolute left-8 md:left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-card border-2 border-primary/30 flex items-center justify-center shadow-soft z-10">
-        <Icon className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+      <div className={`absolute left-8 md:left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-card border-2 flex items-center justify-center shadow-soft z-10 transition-all ${
+        isActive ? "border-primary ring-4 ring-primary/30 animate-pulse" : "border-primary/30"
+      }`}>
+        <Icon className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? "text-primary" : "text-primary"}`} />
       </div>
 
       <div className={`ml-28 md:ml-0 md:w-1/2 ${isEven ? "md:pr-16 md:text-right" : "md:pl-16 md:text-left"}`}>
-        <div className="bg-card/80 backdrop-blur-sm border border-primary/10 rounded-xl p-6 shadow-soft hover:shadow-elegant transition-shadow">
+        <div className={`bg-card/80 backdrop-blur-sm border rounded-xl p-6 shadow-soft hover:shadow-elegant transition-shadow ${
+          isActive ? "border-primary/60 shadow-elegant" : "border-primary/10"
+        }`}>
           <div className={`flex items-center gap-2 mb-2 ${isEven ? "md:justify-end" : ""}`}>
             <Clock className="w-4 h-4 text-primary" />
             <span className="text-primary font-display text-lg font-semibold">{time}</span>
+            {isActive && (
+              <span className="text-[10px] uppercase tracking-widest bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-sans">Now</span>
+            )}
           </div>
           <h3 className="font-display text-2xl text-foreground mb-2">{event.title}</h3>
           <p className="text-muted-foreground font-body mb-3">{event.description}</p>
@@ -58,6 +65,7 @@ function TimelineCard({ event, index }: { event: typeof defaultEvents[0]; index:
 
 const EventTimeline = () => {
   const [events, setEvents] = useState(defaultEvents);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -69,6 +77,23 @@ const EventTimeline = () => {
     };
     fetchEvents();
   }, []);
+
+  // Tick every minute so "Now" highlight stays accurate during the day.
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Active event = the most-recently-started event whose next sibling hasn't started yet.
+  const activeIndex = (() => {
+    let active = -1;
+    events.forEach((e, i) => {
+      const start = new Date(e.event_time).getTime();
+      const next = events[i + 1] ? new Date(events[i + 1].event_time).getTime() : Infinity;
+      if (now >= start && now < next) active = i;
+    });
+    return active;
+  })();
 
   return (
     <section id="schedule" className="py-24 bg-gradient-to-b from-background via-cream/50 to-background">
@@ -86,7 +111,7 @@ const EventTimeline = () => {
         <div className="relative max-w-3xl mx-auto">
           <div className="absolute left-8 md:left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
           {events.map((event, index) => (
-            <TimelineCard key={event.id} event={event} index={index} />
+            <TimelineCard key={event.id} event={event} index={index} isActive={index === activeIndex} />
           ))}
         </div>
       </div>

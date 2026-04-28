@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import { anonymizeEntry } from "@/lib/format-utils";
 import { MessageCircle } from "lucide-react";
 
@@ -81,7 +82,7 @@ function MessagesColumn({
 export default function MessagesWall() {
   const [messages, setMessages] = useState<RSVPMessage[]>([]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     const { data } = await supabase
       .from("rsvps")
       .select("id, guest_name, phone, message, created_at")
@@ -90,16 +91,10 @@ export default function MessagesWall() {
       .order("created_at", { ascending: false })
       .limit(30);
     setMessages((data || []) as RSVPMessage[]);
-  };
-
-  useEffect(() => {
-    fetchMessages();
-    const channel = supabase
-      .channel("messages-wall-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "rsvps" }, () => fetchMessages())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+  useRealtimeTable("rsvps", fetchMessages, "messages-wall-realtime");
 
   if (messages.length === 0) return null;
 

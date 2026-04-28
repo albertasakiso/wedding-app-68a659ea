@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download, Search } from "lucide-react";
 import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
@@ -241,6 +242,11 @@ const RSVP = () => {
             </p>
           </div>
 
+          {/* Lookup existing RSVP */}
+          <div className="text-center -mt-8 mb-8">
+            <RSVPLookup />
+          </div>
+
           {/* Form */}
           <div className="bg-card border border-primary/20 rounded-2xl p-8 md:p-12 shadow-elegant">
             <Form {...form}>
@@ -408,5 +414,88 @@ const RSVP = () => {
     </div>
   );
 };
+
+interface FoundRSVP {
+  guest_name: string;
+  attending: boolean | null;
+  plus_one_name: string | null;
+  created_at: string;
+}
+
+function RSVPLookup() {
+  const [open, setOpen] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [result, setResult] = useState<FoundRSVP[] | null>(null);
+
+  const handleLookup = async () => {
+    if (phone.trim().length < 6) return toast.error("Enter your phone number");
+    setSearching(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase
+        .from("rsvps")
+        .select("guest_name, attending, plus_one_name, created_at")
+        .eq("phone", phone.trim())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      setResult((data || []) as FoundRSVP[]);
+    } catch (err: any) {
+      toast.error(err.message || "Lookup failed");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setPhone(""); setResult(null); } }}>
+      <DialogTrigger asChild>
+        <Button variant="link" className="text-primary text-sm gap-1">
+          <Search className="w-3 h-3" /> Already RSVPed? Look up your response
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle className="font-display">Find Your RSVP</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          <Label className="font-body text-sm">Phone number used at RSVP</Label>
+          <div className="flex gap-2">
+            <Input
+              type="tel"
+              placeholder="+233 XX XXX XXXX"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border-primary/20"
+            />
+            <Button onClick={handleLookup} disabled={searching} className="bg-primary text-primary-foreground">
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Find"}
+            </Button>
+          </div>
+          {result !== null && (
+            result.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No RSVP found for this number. Submit one below!
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {result.map((r, i) => (
+                  <div key={i} className="p-4 rounded-lg border border-primary/10 bg-cream/40">
+                    <p className="font-display text-foreground">{r.guest_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {r.attending ? "✓ Attending" : "Regretfully declined"}
+                      {r.plus_one_name && ` · +1: ${r.plus_one_name}`}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground/70 mt-1">
+                      Submitted {new Date(r.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default RSVP;
