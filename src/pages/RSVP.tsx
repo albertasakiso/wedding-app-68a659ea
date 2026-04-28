@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download, Search } from "lucide-react";
 import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
@@ -239,6 +240,11 @@ const RSVP = () => {
             <p className="text-muted-foreground font-body text-lg">
               Please respond by April 1st, 2026
             </p>
+          </div>
+
+          {/* Lookup existing RSVP */}
+          <div className="text-center -mt-8 mb-8">
+            <RSVPLookup />
           </div>
 
           {/* Form */}
