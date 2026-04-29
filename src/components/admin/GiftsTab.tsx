@@ -273,9 +273,12 @@ export default function GiftsTab({ gifts, payments, giftWall, onRefresh }: Gifts
                 <Select value={wallGiftType} onValueChange={setWallGiftType}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="momo">MoMo</SelectItem>
+                    <SelectItem value="bank">Bank Transfer</SelectItem>
                     <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="physical">Physical Gift</SelectItem>
                     <SelectItem value="kind">In Kind</SelectItem>
-                    <SelectItem value="both">Both</SelectItem>
+                    <SelectItem value="both">Cash & Kind</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
