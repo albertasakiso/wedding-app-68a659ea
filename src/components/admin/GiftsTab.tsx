@@ -179,15 +179,17 @@ export default function GiftsTab({ gifts, payments, giftWall, onRefresh }: Gifts
   });
 
   const giftTypeBadge = (type: string) => {
-    const styles: Record<string, string> = {
-      cash: "bg-green-100 text-green-700",
-      kind: "bg-blue-100 text-blue-700",
-      both: "bg-purple-100 text-purple-700",
+    const styles: Record<string, { label: string; cls: string }> = {
+      momo: { label: "MoMo", cls: "bg-yellow-100 text-yellow-800" },
+      bank: { label: "Bank", cls: "bg-blue-100 text-blue-800" },
+      cash: { label: "Cash", cls: "bg-green-100 text-green-700" },
+      physical: { label: "Physical Gift", cls: "bg-purple-100 text-purple-800" },
+      kind: { label: "In Kind", cls: "bg-indigo-100 text-indigo-700" },
+      both: { label: "Cash & Kind", cls: "bg-pink-100 text-pink-700" },
     };
+    const s = styles[type] || styles.cash;
     return (
-      <span className={`text-xs px-2 py-1 rounded-full capitalize ${styles[type] || styles.cash}`}>
-        {type}
-      </span>
+      <span className={`text-xs px-2 py-1 rounded-full ${s.cls}`}>{s.label}</span>
     );
   };
 
