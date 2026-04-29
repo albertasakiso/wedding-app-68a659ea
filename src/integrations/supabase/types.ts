@@ -330,6 +330,7 @@ export type Database = {
           dress_code_colors: string[] | null
           hero_image_url: string | null
           id: string
+          story_milestones: Json
           tagline: string | null
           wedding_date: string
         }
@@ -340,6 +341,7 @@ export type Database = {
           dress_code_colors?: string[] | null
           hero_image_url?: string | null
           id?: string
+          story_milestones?: Json
           tagline?: string | null
           wedding_date?: string
         }
@@ -350,6 +352,7 @@ export type Database = {
           dress_code_colors?: string[] | null
           hero_image_url?: string | null
           id?: string
+          story_milestones?: Json
           tagline?: string | null
           wedding_date?: string
         }
