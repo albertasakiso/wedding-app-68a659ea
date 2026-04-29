@@ -64,13 +64,15 @@ const VenueSection = () => {
   }, []);
 
   const parkingLines = venue.parking_info?.split("\n").filter(Boolean) || [];
-  const hasMap = venue.latitude && venue.longitude;
-  const mapEmbedUrl = hasMap
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude! - 0.01},${venue.latitude! - 0.005},${venue.longitude! + 0.01},${venue.latitude! + 0.005}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`
-    : null;
-  const mapLinkUrl = hasMap
-    ? `https://www.openstreetmap.org/?mlat=${venue.latitude}&mlon=${venue.longitude}#map=16/${venue.latitude}/${venue.longitude}`
-    : venue.map_url || "https://maps.google.com";
+  const hasCoords = venue.latitude != null && venue.longitude != null;
+  // Google Maps "place" embed works without an API key and opens native maps app on tap
+  const query = hasCoords
+    ? `${venue.latitude},${venue.longitude}`
+    : venue.address || venue.name;
+  const mapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
+  // Universal link: opens Google Maps app on Android, Apple Maps/Google Maps on iOS, Maps on desktop
+  const mapLinkUrl = venue.map_url
+    || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
   return (
     <section
@@ -93,31 +95,29 @@ const VenueSection = () => {
 
         <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           <div className="space-y-6">
-            {/* Map with skeleton */}
-            {mapEmbedUrl ? (
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 shadow-elegant relative">
-                {!mapLoaded && (
-                  <Skeleton className="absolute inset-0 rounded-2xl" />
-                )}
-                <iframe
-                  src={mapEmbedUrl}
-                  className={`w-full h-full border-0 transition-opacity duration-500 ${mapLoaded ? "opacity-100" : "opacity-0"}`}
-                  loading="lazy"
-                  title={`Map of ${venue.name}`}
-                  onLoad={() => setMapLoaded(true)}
-                />
-              </div>
-            ) : (
-              <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-champagne to-cream border border-primary/20 overflow-hidden shadow-elegant flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Building className="w-12 h-12 text-primary" />
-                  </div>
-                  <p className="font-display text-xl text-foreground">{venue.name}</p>
-                  <p className="text-muted-foreground font-body">Venue Photo Coming Soon</p>
-                </div>
-              </div>
-            )}
+            {/* Google Map — tap to open native maps app for directions */}
+            <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-primary/20 shadow-elegant relative group">
+              {!mapLoaded && <Skeleton className="absolute inset-0 rounded-2xl" />}
+              <iframe
+                src={mapEmbedUrl}
+                className={`w-full h-full border-0 transition-opacity duration-500 ${mapLoaded ? "opacity-100" : "opacity-0"}`}
+                loading="lazy"
+                title={`Map of ${venue.name}`}
+                referrerPolicy="no-referrer-when-downgrade"
+                onLoad={() => setMapLoaded(true)}
+                allowFullScreen
+              />
+              {/* Tap overlay (mobile-friendly) — opens Google Maps / Apple Maps for directions */}
+              <a
+                href={mapLinkUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${venue.name} in Maps for directions`}
+                className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-body font-medium px-3 py-2 rounded-full shadow-elegant hover:scale-105 transition-transform"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Directions
+              </a>
+            </div>
 
             <div className="bg-card border border-primary/10 rounded-xl p-6 shadow-soft">
               <h3 className="font-display text-2xl text-foreground mb-4">{venue.name}</h3>
