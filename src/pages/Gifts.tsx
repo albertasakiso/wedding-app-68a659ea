@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PhoneInput from "@/components/PhoneInput";
-import { useMemo } from "react";
 import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry, formatGHS } from "@/lib/format-utils";
