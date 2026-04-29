@@ -15,15 +15,16 @@ import EmailListTab from "./EmailListTab";
 import GiftsTab from "./GiftsTab";
 import PaymentSettingsTab from "./PaymentSettingsTab";
 import EmailSettingsTab from "./EmailSettingsTab";
+import type { DashboardData } from "./types";
 
 interface AdminDashboardProps {
   onLogout: () => void;
 }
 
 export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch } = useQuery<DashboardData>({
     queryKey: ["admin-dashboard"],
-    queryFn: () => adminApi("get-dashboard"),
+    queryFn: () => adminApi("get-dashboard") as Promise<DashboardData>,
   });
 
   const handleLogout = () => {
@@ -43,7 +44,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     );
   }
 
-  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null, gift_wall = [] } = data || {};
+  const { rsvps = [], events = [], venue = null, photos = [], settings = null, email_list = [], gift_options = [], gift_payments = [], payment_settings = null, email_settings = null, gift_wall = [] } = data ?? ({} as Partial<DashboardData>);
 
   // Single source of truth — drives both tab triggers and tab content.
   const ADMIN_TABS = [
