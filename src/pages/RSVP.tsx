@@ -460,12 +460,9 @@ function RSVPLookup() {
         <div className="space-y-4 py-2">
           <Label className="font-body text-sm">Phone number used at RSVP</Label>
           <div className="flex gap-2">
-            <Input
-              type="tel"
-              placeholder="+233 XX XXX XXXX"
+            <PhoneInput
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="border-primary/20"
             />
             <Button onClick={handleLookup} disabled={searching} className="bg-primary text-primary-foreground">
               {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Find"}

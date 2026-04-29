@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PhoneInput from "@/components/PhoneInput";
+import { useMemo } from "react";
 import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry, formatGHS } from "@/lib/format-utils";
@@ -331,7 +334,7 @@ export default function Gifts() {
                 </div>
                 <div>
                   <Label className="font-body text-sm">Phone Number *</Label>
-                  <Input value={donorPhone} onChange={(e) => setDonorPhone(e.target.value)} placeholder="+233 XX XXX XXXX" type="tel" />
+                  <PhoneInput value={donorPhone} onChange={(e) => setDonorPhone(e.target.value)} />
                 </div>
                 <div>
                   <Label className="font-body text-sm">Email (optional, for thank-you)</Label>
