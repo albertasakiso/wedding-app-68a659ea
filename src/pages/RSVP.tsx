@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import PhoneInput from "@/components/PhoneInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download, Search } from "lucide-react";
 import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
@@ -274,7 +275,7 @@ const RSVP = () => {
                     <FormItem>
                       <FormLabel className="font-display text-lg">Phone Number *</FormLabel>
                       <FormControl>
-                        <Input type="tel" placeholder="+233 XX XXX XXXX" className="border-primary/20 focus:border-primary" {...field} />
+                        <PhoneInput {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -459,12 +460,9 @@ function RSVPLookup() {
         <div className="space-y-4 py-2">
           <Label className="font-body text-sm">Phone number used at RSVP</Label>
           <div className="flex gap-2">
-            <Input
-              type="tel"
-              placeholder="+233 XX XXX XXXX"
+            <PhoneInput
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="border-primary/20"
             />
             <Button onClick={handleLookup} disabled={searching} className="bg-primary text-primary-foreground">
               {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : "Find"}

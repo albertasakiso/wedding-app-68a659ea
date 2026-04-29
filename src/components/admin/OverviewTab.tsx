@@ -1,8 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Users, UserCheck, UserX, Heart } from "lucide-react";
+import RecentActivity from "./RecentActivity";
+import type { RSVPRow } from "./types";
 
 interface OverviewTabProps {
-  rsvps: any[];
+  rsvps: RSVPRow[];
 }
 
 export default function OverviewTab({ rsvps }: OverviewTabProps) {
@@ -33,6 +35,7 @@ export default function OverviewTab({ rsvps }: OverviewTabProps) {
         ))}
       </div>
 
+      <RecentActivity />
     </div>
   );
 }

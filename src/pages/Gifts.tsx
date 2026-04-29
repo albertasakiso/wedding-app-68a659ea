@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PhoneInput from "@/components/PhoneInput";
 import { Gift, Heart, Loader2, Smartphone, Building2, Copy, Check, Users, Send, Target } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry, formatGHS } from "@/lib/format-utils";
@@ -58,6 +60,7 @@ export default function Gifts() {
   const [donorEmail, setDonorEmail] = useState("");
   const [donorMessage, setDonorMessage] = useState("");
   const [giftType, setGiftType] = useState("momo");
+  const [wallFilter, setWallFilter] = useState<"all" | "cash" | "kind" | "both">("all");
   const { ref: wallRef, isVisible: wallVisible } = useScrollReveal({ threshold: 0.1 });
   const { ref: progressRef, isVisible: progressVisible } = useScrollReveal({ threshold: 0.1 });
 
@@ -331,7 +334,7 @@ export default function Gifts() {
                 </div>
                 <div>
                   <Label className="font-body text-sm">Phone Number *</Label>
-                  <Input value={donorPhone} onChange={(e) => setDonorPhone(e.target.value)} placeholder="+233 XX XXX XXXX" type="tel" />
+                  <PhoneInput value={donorPhone} onChange={(e) => setDonorPhone(e.target.value)} />
                 </div>
                 <div>
                   <Label className="font-body text-sm">Email (optional, for thank-you)</Label>
@@ -413,23 +416,42 @@ export default function Gifts() {
                 <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
                   <Gift className="w-4 h-4 text-primary" /> Gifts Received
                 </h3>
+                <Tabs value={wallFilter} onValueChange={(v) => setWallFilter(v as typeof wallFilter)}>
+                  <TabsList className="grid grid-cols-4 mb-3 h-9">
+                    <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
+                    <TabsTrigger value="cash" className="text-xs">Cash</TabsTrigger>
+                    <TabsTrigger value="kind" className="text-xs">In Kind</TabsTrigger>
+                    <TabsTrigger value="both" className="text-xs">Both</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2">
-                  {giftWall.map((entry) => {
-                    const badge = giftTypeBadge[entry.gift_type] || giftTypeBadge.cash;
-                    return (
-                      <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
-                        <span className="font-sans text-sm font-medium text-foreground">
-                          {anonymizeEntry(entry.donor_name, entry.phone)}
-                        </span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>
-                          {badge.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {giftWall.length === 0 && (
-                    <p className="text-center text-muted-foreground text-sm py-4">No gifts yet</p>
-                  )}
+                  {(() => {
+                    const cashTypes = ["momo", "bank", "cash"];
+                    const kindTypes = ["physical", "kind"];
+                    const filtered = giftWall.filter((e) => {
+                      if (wallFilter === "all") return true;
+                      if (wallFilter === "cash") return cashTypes.includes(e.gift_type);
+                      if (wallFilter === "kind") return kindTypes.includes(e.gift_type);
+                      if (wallFilter === "both") return e.gift_type === "both";
+                      return true;
+                    });
+                    if (filtered.length === 0) {
+                      return <p className="text-center text-muted-foreground text-sm py-4">No gifts in this category yet</p>;
+                    }
+                    return filtered.map((entry) => {
+                      const badge = giftTypeBadge[entry.gift_type] || giftTypeBadge.cash;
+                      return (
+                        <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
+                          <span className="font-sans text-sm font-medium text-foreground">
+                            {anonymizeEntry(entry.donor_name, entry.phone)}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>
+                            {badge.label}
+                          </span>
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>

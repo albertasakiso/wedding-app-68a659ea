@@ -1,70 +1,79 @@
-## Final Consolidation + Next-Wave FRS
+## Round 4 — Type Safety, Admin Polish & Guest-Day Features
 
-Audit of remaining gaps after the previous round.
+The codebase is now structurally clean (no raw realtime channels, no dead exports, no TODOs). What remains is **type-safety hardening**, a few **admin UX gaps**, and **wedding-day-specific guest features**.
+
+---
 
 ### Unconsolidated Modules Found
 
 | # | Location | Issue |
 |---|---|---|
-| C1 | `src/pages/Gallery.tsx` (line 68) | Still uses raw `supabase.channel(...)` instead of the new `useRealtimeTable` hook |
-| C2 | `src/components/MessagesWall.tsx` (line 98) | Same — raw channel subscription, should use `useRealtimeTable` |
-| C3 | `src/components/admin/MessagesTab.tsx` | Read-only list. The "Send All Reminders" / bulk-email flow promised earlier was never wired — no button, no call to `email-notifications` |
-| C4 | `src/lib/image-utils.ts` (line 64) | Re-exports `anonymizeEntry` for "backward compatibility" but no consumer still imports from here — dead re-export, can be removed |
-| C5 | `src/pages/Gallery.tsx` (line 183) | Hardcoded "Photos coming soon" copy — should fall back gracefully now that guests can upload |
+| C1 | `AdminDashboard.tsx`, `OverviewTab.tsx`, `MessagesTab.tsx`, `RSVPsTab.tsx` | All admin tabs use `rsvps: any[]` instead of typed rows from `Database["public"]["Tables"]["rsvps"]["Row"]` |
+| C2 | `AdminDashboard.tsx` line 28 | `data` from `adminApi("get-dashboard")` is implicitly `any` — no shared `DashboardData` interface |
+| C3 | Phone-input duplication | Same `+233 XX XXX XXXX` placeholder in `RSVP.tsx` (×2) and `Gifts.tsx` — no shared `<PhoneInput />` |
+| C4 | `MessagesTab.tsx` | Read-only and isolated — no link to the actual sender (clicking a message could open a quick "reply via WhatsApp" using stored phone) |
 
 ### Unimplemented / New FRS
 
 | # | Feature | Why it matters |
 |---|---|---|
-| F1 | **Bulk RSVP reminder** in admin | Promised in earlier plan, never built. Admin selects "not yet RSVPed" segment → triggers `email-notifications` with reminder template |
-| F2 | **Gift wall moderation** | `gift_wall.is_visible` column exists but admin has no UI to toggle/hide entries. Add hide/show actions in `GiftsTab` |
-| F3 | **RSVP "View my RSVP"** lookup | Guests have no way to confirm or update. Add phone-based lookup on `/rsvp` showing their submitted entry |
-| F4 | **Live event-day timeline highlight** | On wedding day, `EventTimeline` should auto-highlight the current/next event using `event_time` vs `now()` |
-| F5 | **PWA install prompt** | Add `manifest.json` + service worker stub so guests can "Add to Home Screen" — high engagement, low effort |
+| F1 | **Guest dashboard / "My Day" page** | A single `/my-day` route showing: countdown, current event highlight, venue map, dress code, all in one mobile-optimized card. Useful day-of for guests who don't want to scroll the whole homepage. |
+| F2 | **Story/Timeline section** ("How we met") | Most wedding sites have a couple's story. Currently missing. Driven by `site_settings` (new optional `story_milestones jsonb` column). |
+| F3 | **Gift wall sort/filter** | `Gifts.tsx` shows wall entries chronologically only. Add filter (cash / kind / both) and sort toggle. Pure client-side. |
+| F4 | **Admin search across messages + names** | `MessagesTab` has no search; `OverviewTab` shows totals but no recent activity feed. Add a unified `<RecentActivity />` widget showing last 10 events (RSVPs + gifts + photos) with timestamps. |
+| F5 | **404 → friendly wedding-themed not-found** | `NotFound.tsx` is the default Lovable shell — should match brand (gold theme, link back to home). |
+| F6 | **Open Graph image** | `index.html` still uses Lovable's default `opengraph-image-p98pqg.png`. WhatsApp/social shares of the invite show generic image — should be branded. |
 
 ---
 
 ### Implementation
 
-**Consolidation (C1–C5)**
-- Refactor `Gallery.tsx` and `MessagesWall.tsx` to call `useRealtimeTable("gallery_photos", refetch)` / `useRealtimeTable("gift_wall", refetch)`.
-- Remove the dead re-export in `image-utils.ts`.
-- Replace empty-gallery copy with: "Be the first to share a moment — upload above."
+**C1–C2 — Typed admin data**
+- Create `src/components/admin/types.ts` exporting `RSVPRow`, `GiftPaymentRow`, `GiftWallRow`, `DashboardData` derived from `Database["public"]["Tables"][...]["Row"]`.
+- Update `AdminDashboard.tsx` to type the `useQuery` result; propagate to all tab props.
 
-**F1 — Bulk reminders (`MessagesTab.tsx` → rename concept to "Outreach")**
-- Add tabs: *Messages from guests* | *Send reminder*.
-- "Send reminder" filters RSVPs where `attending IS NULL` (or all email_list subscribers), shows count, has a "Send to N guests" button calling `email-notifications` with action `send_bulk_reminder`.
-- Extend `email-notifications` edge function with a `send_bulk_reminder` action that loops through recipients using existing `rsvp_reminder_subject/message` from `email_settings`.
+**C3 — Shared PhoneInput**
+- Create `src/components/PhoneInput.tsx` wrapping shadcn `Input` with the GH placeholder, `type="tel"`, and `inputMode="tel"`. Replace 3 call sites.
 
-**F2 — Gift wall moderation (`GiftsTab.tsx`)**
-- Add a "Wall entries" sub-section listing `gift_wall` rows with an Eye/EyeOff toggle.
-- Migration: add UPDATE policy on `gift_wall` for the admin (via service-role through `admin-api` edge function action `toggle_gift_wall_visibility`).
+**C4 — WhatsApp reply on messages**
+- In `MessagesTab.tsx`, render an "Open WhatsApp" button on each message card if the RSVP has `phone` (uses `https://wa.me/<digits>`).
 
-**F3 — RSVP lookup (`RSVP.tsx`)**
-- Add a small "Already RSVPed? Look up" link → dialog with phone input → queries `rsvps` by phone → shows status. Read-only (matches existing RLS).
+**F1 — `/my-day` page**
+- New `src/pages/MyDay.tsx` route. Composes existing pieces: `<Hero />` countdown (slim variant), the active event from `EventTimeline` logic (extracted to a shared `useActiveEvent` hook), `<DressCode />`, venue map link.
+- Add to `App.tsx` routes and `Navigation.tsx` (mobile-friendly link).
 
-**F4 — Live timeline (`EventTimeline.tsx`)**
-- Compute current/upcoming event by comparing `event_time` to `Date.now()`. Add a pulsing gold ring on the active card.
-- Pure client logic, no schema change.
+**F2 — Couple's story**
+- Migration: add `story_milestones jsonb default '[]'` to `site_settings` (each item: `{ year, title, description, image_url? }`).
+- New `src/components/StorySection.tsx` rendering a vertical timeline (reusing `useScrollReveal`).
+- Admin: add a "Story" editor section in `SettingsTab.tsx` (add/remove milestones).
+- Mount on `Index.tsx` between `VenueSection` and `DressCode`.
 
-**F5 — PWA**
-- Add `public/manifest.json` (couple names, gold theme color, icons reused from `hero_image_url`).
-- Link manifest in `index.html`. Add minimal service worker (`public/sw.js`) for offline shell caching.
-- Register SW in `main.tsx`.
+**F3 — Gift wall filter/sort**
+- In the wall section of `Gifts.tsx`, add `<Tabs>` for All / Cash / Kind / Both and a sort toggle (newest / oldest). Pure `useMemo`.
+
+**F4 — Recent activity feed**
+- New `src/components/admin/RecentActivity.tsx` querying last 10 events combining `rsvps`, `gift_payments`, `gallery_photos`, sorted by `created_at`.
+- Add to `OverviewTab.tsx` below the stat cards.
+
+**F5 — Branded 404**
+- Rewrite `src/pages/NotFound.tsx` with gold theme, broken-heart illustration, link back to `/`.
+
+**F6 — Open Graph image**
+- Generate a 1200×630 branded OG image (gold + ivory, "Albert & Ruby · May 2, 2026") into `public/og-image.png`, update `index.html` meta tags.
 
 ---
 
 ### Files
 
-**Edit**: `src/pages/Gallery.tsx`, `src/components/MessagesWall.tsx`, `src/lib/image-utils.ts`, `src/components/admin/MessagesTab.tsx`, `src/components/admin/GiftsTab.tsx`, `src/pages/RSVP.tsx`, `src/components/EventTimeline.tsx`, `supabase/functions/email-notifications/index.ts`, `supabase/functions/admin-api/index.ts`, `index.html`, `src/main.tsx`
+**New**: `src/pages/MyDay.tsx`, `src/components/StorySection.tsx`, `src/components/PhoneInput.tsx`, `src/hooks/useActiveEvent.ts`, `src/components/admin/types.ts`, `src/components/admin/RecentActivity.tsx`, `public/og-image.png`
 
-**Create**: `public/manifest.json`, `public/sw.js`
+**Edited**: `src/App.tsx`, `src/components/Navigation.tsx`, `src/pages/Index.tsx`, `src/pages/RSVP.tsx`, `src/pages/Gifts.tsx`, `src/pages/NotFound.tsx`, `src/components/EventTimeline.tsx`, `src/components/admin/AdminDashboard.tsx`, `src/components/admin/OverviewTab.tsx`, `src/components/admin/MessagesTab.tsx`, `src/components/admin/RSVPsTab.tsx`, `src/components/admin/SettingsTab.tsx`, `index.html`
 
-**Migration**: Add admin-only UPDATE flow for `gift_wall.is_visible` (handled via admin-api with service role; no new RLS policy needed).
+**Migration**: Add `story_milestones jsonb default '[]'` to `site_settings`.
 
 ---
 
-### Out of Scope (deferred for future rounds)
-- Multi-language (i18n) — large surface area
-- QR check-in / seating lookup — requires new tables + admin tooling
-- Digital guestbook signature drawing — niche
+### Out of Scope (future)
+- i18n (multi-language) — large surface, low immediate ROI
+- QR check-in / digital seating chart — needs new tables + day-of staff workflow
+- Drawn guestbook signatures — niche

@@ -8,8 +8,10 @@ import { adminApi } from "@/lib/admin-api";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+import type { RSVPRow } from "./types";
+
 interface RSVPsTabProps {
-  rsvps: any[];
+  rsvps: RSVPRow[];
   onRefresh: () => void;
 }
 
@@ -46,7 +48,7 @@ export default function RSVPsTab({ rsvps, onRefresh }: RSVPsTabProps) {
       const { data, error } = await supabase.functions.invoke("email-notifications", {
         body: {
           action: "send-rsvp-reminder",
-          guests: guestsWithEmail.map((g: any) => ({
+          guests: guestsWithEmail.map((g) => ({
             guest_name: g.guest_name,
             guest_email: g.email,
           })),
