@@ -5,10 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { adminApi } from "@/lib/admin-api";
 import { useToast } from "@/hooks/use-toast";
-import { Settings, Plus, X } from "lucide-react";
+import { Settings, Plus, X, Heart } from "lucide-react";
+import type { StoryMilestone, SiteSettingsRow } from "./types";
 
 interface SettingsTabProps {
-  settings: any;
+  settings: SiteSettingsRow | null;
   onRefresh: () => void;
 }
 
@@ -21,8 +22,15 @@ export default function SettingsTab({ settings, onRefresh }: SettingsTabProps) {
     hero_image_url: "",
     dress_code: "",
     dress_code_colors: [] as string[],
+    story_milestones: [] as StoryMilestone[],
   });
   const [newColor, setNewColor] = useState("#D4AF37");
+  const [draftMilestone, setDraftMilestone] = useState<StoryMilestone>({
+    year: "",
+    title: "",
+    description: "",
+    image_url: "",
+  });
 
   useEffect(() => {
     if (settings) {
@@ -33,6 +41,9 @@ export default function SettingsTab({ settings, onRefresh }: SettingsTabProps) {
         hero_image_url: settings.hero_image_url || "",
         dress_code: settings.dress_code || "",
         dress_code_colors: settings.dress_code_colors || [],
+        story_milestones: Array.isArray(settings.story_milestones)
+          ? (settings.story_milestones as unknown as StoryMilestone[])
+          : [],
       });
     }
   }, [settings]);
@@ -47,6 +58,7 @@ export default function SettingsTab({ settings, onRefresh }: SettingsTabProps) {
         hero_image_url: form.hero_image_url || null,
         dress_code: form.dress_code || null,
         dress_code_colors: form.dress_code_colors,
+        story_milestones: form.story_milestones,
       });
       toast({ title: "Settings saved" });
       onRefresh();
@@ -61,6 +73,23 @@ export default function SettingsTab({ settings, onRefresh }: SettingsTabProps) {
   };
   const removeColor = (c: string) => {
     setForm({ ...form, dress_code_colors: form.dress_code_colors.filter((x) => x !== c) });
+  };
+
+  const addMilestone = () => {
+    if (!draftMilestone.year.trim() || !draftMilestone.title.trim()) {
+      return toast({ title: "Year and title are required", variant: "destructive" });
+    }
+    setForm({
+      ...form,
+      story_milestones: [
+        ...form.story_milestones,
+        { ...draftMilestone, image_url: draftMilestone.image_url?.trim() || undefined },
+      ],
+    });
+    setDraftMilestone({ year: "", title: "", description: "", image_url: "" });
+  };
+  const removeMilestone = (i: number) => {
+    setForm({ ...form, story_milestones: form.story_milestones.filter((_, idx) => idx !== i) });
   };
 
   return (
@@ -120,6 +149,41 @@ export default function SettingsTab({ settings, onRefresh }: SettingsTabProps) {
               <p className="text-xs text-muted-foreground">No colors added yet.</p>
             )}
           </div>
+        </div>
+
+        {/* Story milestones */}
+        <div className="pt-4 border-t border-primary/10 space-y-3">
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 text-primary" />
+            <label className="text-sm font-medium text-foreground">Our Story Milestones</label>
+          </div>
+          <p className="text-xs text-muted-foreground">Shown as a vertical timeline on the homepage. Leave empty to hide the section.</p>
+
+          {form.story_milestones.length > 0 && (
+            <div className="space-y-2">
+              {form.story_milestones.map((m, i) => (
+                <div key={i} className="flex items-start justify-between gap-3 rounded-lg bg-muted/50 p-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{m.year} — {m.title}</p>
+                    {m.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.description}</p>}
+                  </div>
+                  <button onClick={() => removeMilestone(i)} className="text-muted-foreground hover:text-destructive shrink-0">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Year (e.g. 2018)" value={draftMilestone.year} onChange={(e) => setDraftMilestone({ ...draftMilestone, year: e.target.value })} />
+            <Input placeholder="Title (e.g. We met)" value={draftMilestone.title} onChange={(e) => setDraftMilestone({ ...draftMilestone, title: e.target.value })} />
+          </div>
+          <Textarea placeholder="Description" rows={2} value={draftMilestone.description} onChange={(e) => setDraftMilestone({ ...draftMilestone, description: e.target.value })} />
+          <Input placeholder="Image URL (optional)" value={draftMilestone.image_url || ""} onChange={(e) => setDraftMilestone({ ...draftMilestone, image_url: e.target.value })} />
+          <Button type="button" variant="outline" size="sm" onClick={addMilestone} className="gap-2">
+            <Plus className="h-4 w-4" /> Add Milestone
+          </Button>
         </div>
 
         <Button onClick={handleSave} className="w-full">Save Settings</Button>
