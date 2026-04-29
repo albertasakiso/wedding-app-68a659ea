@@ -64,13 +64,15 @@ const VenueSection = () => {
   }, []);
 
   const parkingLines = venue.parking_info?.split("\n").filter(Boolean) || [];
-  const hasMap = venue.latitude && venue.longitude;
-  const mapEmbedUrl = hasMap
-    ? `https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude! - 0.01},${venue.latitude! - 0.005},${venue.longitude! + 0.01},${venue.latitude! + 0.005}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`
-    : null;
-  const mapLinkUrl = hasMap
-    ? `https://www.openstreetmap.org/?mlat=${venue.latitude}&mlon=${venue.longitude}#map=16/${venue.latitude}/${venue.longitude}`
-    : venue.map_url || "https://maps.google.com";
+  const hasCoords = venue.latitude != null && venue.longitude != null;
+  // Google Maps "place" embed works without an API key and opens native maps app on tap
+  const query = hasCoords
+    ? `${venue.latitude},${venue.longitude}`
+    : venue.address || venue.name;
+  const mapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
+  // Universal link: opens Google Maps app on Android, Apple Maps/Google Maps on iOS, Maps on desktop
+  const mapLinkUrl = venue.map_url
+    || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
   return (
     <section
