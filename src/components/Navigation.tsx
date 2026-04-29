@@ -30,6 +30,7 @@ const Navigation = () => {
     { label: "Venue", action: () => scrollToSection("venue") },
     { label: "Gallery", href: "/gallery" },
     { label: "Gifts", href: "/gifts" },
+    { label: "My Day", href: "/my-day" },
     { label: "RSVP", href: "/rsvp", highlight: true },
   ];
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Church, Martini, UtensilsCrossed, Music, MapPin, Clock, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { useActiveEvent } from "@/hooks/useActiveEvent";
 
 const iconMap: Record<string, any> = {
   Church, Martini, UtensilsCrossed, Music, Calendar,
@@ -65,7 +66,6 @@ function TimelineCard({ event, index, isActive }: { event: typeof defaultEvents[
 
 const EventTimeline = () => {
   const [events, setEvents] = useState(defaultEvents);
-  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -78,22 +78,7 @@ const EventTimeline = () => {
     fetchEvents();
   }, []);
 
-  // Tick every minute so "Now" highlight stays accurate during the day.
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Active event = the most-recently-started event whose next sibling hasn't started yet.
-  const activeIndex = (() => {
-    let active = -1;
-    events.forEach((e, i) => {
-      const start = new Date(e.event_time).getTime();
-      const next = events[i + 1] ? new Date(events[i + 1].event_time).getTime() : Infinity;
-      if (now >= start && now < next) active = i;
-    });
-    return active;
-  })();
+  const { activeIndex } = useActiveEvent(events);
 
   return (
     <section id="schedule" className="py-24 bg-gradient-to-b from-background via-cream/50 to-background">
