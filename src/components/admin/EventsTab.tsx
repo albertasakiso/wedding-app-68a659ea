@@ -150,6 +150,7 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
                   }}
                 >
                   <Icon className="h-4 w-4" />
+                </div>
                 <div className="flex-1">
                   <h4 className="font-semibold text-foreground">{evt.title}</h4>
                   {evt.description && <p className="text-sm text-muted-foreground mt-1">{evt.description}</p>}
@@ -178,7 +179,8 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
