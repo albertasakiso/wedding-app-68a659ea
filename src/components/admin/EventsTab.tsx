@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Plus, Pencil, Trash2, Clock, MapPin } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { useToast } from "@/hooks/use-toast";
+import IconPicker from "./IconPicker";
+import { getEventIcon } from "@/lib/event-icons";
 
 interface EventsTabProps {
   events: any[];
@@ -17,10 +20,21 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ title: "", description: "", event_time: "", location: "", order_index: 0 });
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    event_time: "",
+    location: "",
+    order_index: 0,
+    icon: "Calendar",
+    highlight_color: "",
+  });
 
   const resetForm = () => {
-    setForm({ title: "", description: "", event_time: "", location: "", order_index: events.length });
+    setForm({
+      title: "", description: "", event_time: "", location: "",
+      order_index: events.length, icon: "Calendar", highlight_color: "",
+    });
     setEditing(null);
   };
 
@@ -32,17 +46,23 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
       event_time: evt.event_time?.slice(0, 16) || "",
       location: evt.location || "",
       order_index: evt.order_index || 0,
+      icon: evt.icon || "Calendar",
+      highlight_color: evt.highlight_color || "",
     });
     setOpen(true);
   };
 
   const handleSave = async () => {
     try {
+      const payload = {
+        ...form,
+        highlight_color: form.highlight_color || null,
+      };
       if (editing) {
-        await adminApi("update-event", { id: editing.id, ...form });
+        await adminApi("update-event", { id: editing.id, ...payload });
         toast({ title: "Event updated" });
       } else {
-        await adminApi("insert-event", form);
+        await adminApi("insert-event", payload);
         toast({ title: "Event added" });
       }
       setOpen(false);
