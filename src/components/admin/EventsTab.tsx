@@ -102,6 +102,30 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
               <Input type="datetime-local" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} />
               <Input placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
               <Input type="number" placeholder="Order" value={form.order_index} onChange={(e) => setForm({ ...form, order_index: parseInt(e.target.value) || 0 })} />
+              <div className="space-y-2">
+                <Label className="text-sm">Icon</Label>
+                <IconPicker value={form.icon} onChange={(name) => setForm({ ...form, icon: name })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">Highlight Color (optional)</Label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="color"
+                    value={form.highlight_color || "#D4AF37"}
+                    onChange={(e) => setForm({ ...form, highlight_color: e.target.value })}
+                    className="w-16 p-1 h-10"
+                  />
+                  <Input
+                    value={form.highlight_color}
+                    onChange={(e) => setForm({ ...form, highlight_color: e.target.value })}
+                    placeholder="Leave empty to use theme primary"
+                    className="flex-1"
+                  />
+                  {form.highlight_color && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setForm({ ...form, highlight_color: "" })}>Clear</Button>
+                  )}
+                </div>
+              </div>
               <Button onClick={handleSave} className="w-full">{editing ? "Update" : "Add"} Event</Button>
             </div>
           </DialogContent>
