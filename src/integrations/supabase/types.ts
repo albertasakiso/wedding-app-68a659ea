@@ -97,6 +97,8 @@ export type Database = {
           created_at: string
           description: string | null
           event_time: string
+          highlight_color: string | null
+          icon: string
           id: string
           location: string | null
           order_index: number | null
@@ -106,6 +108,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_time: string
+          highlight_color?: string | null
+          icon?: string
           id?: string
           location?: string | null
           order_index?: number | null
@@ -115,6 +119,8 @@ export type Database = {
           created_at?: string
           description?: string | null
           event_time?: string
+          highlight_color?: string | null
+          icon?: string
           id?: string
           location?: string | null
           order_index?: number | null

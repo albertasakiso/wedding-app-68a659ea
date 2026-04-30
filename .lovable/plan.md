@@ -1,79 +1,112 @@
-## Round 4 — Type Safety, Admin Polish & Guest-Day Features
+## Goal
 
-The codebase is now structurally clean (no raw realtime channels, no dead exports, no TODOs). What remains is **type-safety hardening**, a few **admin UX gaps**, and **wedding-day-specific guest features**.
+Make the Wedding Schedule timeline (and supporting modules) fully CMS-managed, plus address remaining unconsolidated modules and propose new FRS.
 
 ---
 
-### Unconsolidated Modules Found
+## Status check (what's already CMS-driven)
 
-| # | Location | Issue |
+| Module | CMS Tab | Live? |
 |---|---|---|
-| C1 | `AdminDashboard.tsx`, `OverviewTab.tsx`, `MessagesTab.tsx`, `RSVPsTab.tsx` | All admin tabs use `rsvps: any[]` instead of typed rows from `Database["public"]["Tables"]["rsvps"]["Row"]` |
-| C2 | `AdminDashboard.tsx` line 28 | `data` from `adminApi("get-dashboard")` is implicitly `any` — no shared `DashboardData` interface |
-| C3 | Phone-input duplication | Same `+233 XX XXX XXXX` placeholder in `RSVP.tsx` (×2) and `Gifts.tsx` — no shared `<PhoneInput />` |
-| C4 | `MessagesTab.tsx` | Read-only and isolated — no link to the actual sender (clicking a message could open a quick "reply via WhatsApp" using stored phone) |
+| Events / Timeline | EventsTab | Yes — title, description, time, location, order |
+| Venue (Google Maps) | VenueTab | Yes |
+| Story Milestones | SettingsTab | Yes |
+| Dress code + colors | SettingsTab | Yes |
+| Hero / Couple / Date | SettingsTab | Yes |
+| Gallery | GalleryTab | Yes |
+| Gifts + payments | GiftsTab + PaymentSettingsTab | Yes |
+| Email templates | EmailSettingsTab | Yes |
 
-### Unimplemented / New FRS
+So the Wedding Schedule **is** already CMS-editable. What's NOT editable today: the **per-event icon** (Church/Martini/Utensils/Music) is hardcoded by index, and there is no icon picker. That's the missing piece visible in the screenshot.
 
-| # | Feature | Why it matters |
+---
+
+## Part A — Make the timeline icon CMS-editable (FRS-T1)
+
+**1. DB migration** — extend `events`:
+```sql
+alter table public.events
+  add column if not exists icon text default 'Calendar',
+  add column if not exists highlight_color text;
+```
+
+**2. `EventsTab.tsx`** — add an icon picker (visual grid of options) to the add/edit dialog. Catalog:
+`Church, Heart, Martini, UtensilsCrossed, Music, Camera, Cake, Sparkles, Sun, Moon, Calendar, MapPin, Gift, PartyPopper, Crown, Flower`.
+Optional color swatch (defaults to theme primary).
+
+**3. `admin-api/index.ts`** — accept `icon`, `highlight_color` in `insert-event` / `update-event`.
+
+**4. `EventTimeline.tsx`** — replace hardcoded `icons[index % 4]` with `iconMap[event.icon] ?? Calendar`; apply `highlight_color` to ring/border if provided. Default events seeded with sensible icons.
+
+**5. `useActiveEvent.ts`** — extend `TimedEvent` interface with optional `icon`, `highlight_color`.
+
+---
+
+## Part B — Unconsolidated modules to clean up
+
+**B1. `gift_type` vocabulary leak** — `Gifts.tsx` (public) and `GiftsTab.tsx` (admin) each maintain their own labels/colors. Extract to `src/lib/gift-types.ts`:
+```ts
+export const GIFT_TYPES = [
+  { value: 'momo',     label: 'Mobile Money', color: 'yellow' },
+  { value: 'bank',     label: 'Bank Transfer', color: 'blue' },
+  { value: 'cash',     label: 'Cash',         color: 'green' },
+  { value: 'physical', label: 'Physical Gift', color: 'purple' },
+  { value: 'kind',     label: 'In-Kind',      color: 'pink' },
+  { value: 'both',     label: 'Cash + Gift',  color: 'amber' },
+] as const;
+export const giftTypeLabel = (v: string) => GIFT_TYPES.find(t => t.value === v)?.label ?? v;
+export const giftTypeBadgeClass = (v: string) => /* ... */;
+```
+Refactor both consumers to import from it.
+
+**B2. Default-events duplication** — `defaultEvents` array duplicated in `EventTimeline.tsx`, `MyDay.tsx` (implicit), and admin-api seed. Move to `src/lib/default-events.ts`.
+
+**B3. Maps URL builder** — `MyDay.tsx` and `VenueSection.tsx` independently build Google Maps URLs from lat/lng/address. Extract `src/lib/maps-utils.ts` with `buildMapsEmbedUrl(venue)` and `buildMapsLinkUrl(venue)`.
+
+**B4. Anonymizer reuse** — `format-utils.ts/anonymizeEntry` exists but `MessagesWall.tsx` still anonymizes inline (verify and switch).
+
+---
+
+## Part C — New FRS proposals (pick what you want)
+
+| ID | Feature | Value |
 |---|---|---|
-| F1 | **Guest dashboard / "My Day" page** | A single `/my-day` route showing: countdown, current event highlight, venue map, dress code, all in one mobile-optimized card. Useful day-of for guests who don't want to scroll the whole homepage. |
-| F2 | **Story/Timeline section** ("How we met") | Most wedding sites have a couple's story. Currently missing. Driven by `site_settings` (new optional `story_milestones jsonb` column). |
-| F3 | **Gift wall sort/filter** | `Gifts.tsx` shows wall entries chronologically only. Add filter (cash / kind / both) and sort toggle. Pure client-side. |
-| F4 | **Admin search across messages + names** | `MessagesTab` has no search; `OverviewTab` shows totals but no recent activity feed. Add a unified `<RecentActivity />` widget showing last 10 events (RSVPs + gifts + photos) with timestamps. |
-| F5 | **404 → friendly wedding-themed not-found** | `NotFound.tsx` is the default Lovable shell — should match brand (gold theme, link back to home). |
-| F6 | **Open Graph image** | `index.html` still uses Lovable's default `opengraph-image-p98pqg.png`. WhatsApp/social shares of the invite show generic image — should be branded. |
+| **FRS-T2** | Live "what's next" banner — sticky pill on `/my-day` showing the next upcoming event countdown | Guest day-of UX |
+| **FRS-T3** | Event grouping (Day 1 / Day 2) — add `day_label` column for multi-day weddings | Scales beyond single day |
+| **FRS-G1** | Gift goal progress bars per gift_option (sum payments / target) on public Gifts page | Increases conversion |
+| **FRS-G2** | Anonymous gift toggle — donor checkbox to hide name on Gift Wall | Privacy |
+| **FRS-R1** | RSVP edit link — token-based update via phone OTP (re-uses email/SMS infra) | Reduces admin edits |
+| **FRS-R2** | Plus-one cap per RSVP enforced server-side via DB check | Headcount accuracy |
+| **FRS-A1** | Admin audit log table (who/what/when on each mutation) | Accountability |
+| **FRS-A2** | One-click export: RSVPs → CSV, Gifts → CSV, all from OverviewTab | Operational |
+| **FRS-N1** | Daily admin digest email at 8am with new RSVPs/gifts/messages (cron via pg_cron + edge fn) | Saves dashboard checking |
+| **FRS-S1** | Public live "Now playing" widget — admin can push current activity ("First dance starting!") visible on `/my-day` | Real-time engagement |
 
 ---
 
-### Implementation
+## Files affected (Part A + B, the consolidation work)
 
-**C1–C2 — Typed admin data**
-- Create `src/components/admin/types.ts` exporting `RSVPRow`, `GiftPaymentRow`, `GiftWallRow`, `DashboardData` derived from `Database["public"]["Tables"][...]["Row"]`.
-- Update `AdminDashboard.tsx` to type the `useQuery` result; propagate to all tab props.
+**New:**
+- `supabase/migrations/<ts>_event_icons.sql`
+- `src/lib/gift-types.ts`
+- `src/lib/default-events.ts`
+- `src/lib/maps-utils.ts`
+- `src/components/admin/IconPicker.tsx`
 
-**C3 — Shared PhoneInput**
-- Create `src/components/PhoneInput.tsx` wrapping shadcn `Input` with the GH placeholder, `type="tel"`, and `inputMode="tel"`. Replace 3 call sites.
-
-**C4 — WhatsApp reply on messages**
-- In `MessagesTab.tsx`, render an "Open WhatsApp" button on each message card if the RSVP has `phone` (uses `https://wa.me/<digits>`).
-
-**F1 — `/my-day` page**
-- New `src/pages/MyDay.tsx` route. Composes existing pieces: `<Hero />` countdown (slim variant), the active event from `EventTimeline` logic (extracted to a shared `useActiveEvent` hook), `<DressCode />`, venue map link.
-- Add to `App.tsx` routes and `Navigation.tsx` (mobile-friendly link).
-
-**F2 — Couple's story**
-- Migration: add `story_milestones jsonb default '[]'` to `site_settings` (each item: `{ year, title, description, image_url? }`).
-- New `src/components/StorySection.tsx` rendering a vertical timeline (reusing `useScrollReveal`).
-- Admin: add a "Story" editor section in `SettingsTab.tsx` (add/remove milestones).
-- Mount on `Index.tsx` between `VenueSection` and `DressCode`.
-
-**F3 — Gift wall filter/sort**
-- In the wall section of `Gifts.tsx`, add `<Tabs>` for All / Cash / Kind / Both and a sort toggle (newest / oldest). Pure `useMemo`.
-
-**F4 — Recent activity feed**
-- New `src/components/admin/RecentActivity.tsx` querying last 10 events combining `rsvps`, `gift_payments`, `gallery_photos`, sorted by `created_at`.
-- Add to `OverviewTab.tsx` below the stat cards.
-
-**F5 — Branded 404**
-- Rewrite `src/pages/NotFound.tsx` with gold theme, broken-heart illustration, link back to `/`.
-
-**F6 — Open Graph image**
-- Generate a 1200×630 branded OG image (gold + ivory, "Albert & Ruby · May 2, 2026") into `public/og-image.png`, update `index.html` meta tags.
+**Edited:**
+- `src/components/admin/EventsTab.tsx` (icon + color pickers)
+- `supabase/functions/admin-api/index.ts` (accept icon/color fields)
+- `src/components/EventTimeline.tsx` (use stored icon)
+- `src/hooks/useActiveEvent.ts` (extend type)
+- `src/pages/Gifts.tsx`, `src/components/admin/GiftsTab.tsx` (use shared gift-types)
+- `src/pages/MyDay.tsx`, `src/components/VenueSection.tsx` (use maps-utils)
+- `src/integrations/supabase/types.ts` (regenerated after migration)
 
 ---
 
-### Files
+## Recommended scope for this round
 
-**New**: `src/pages/MyDay.tsx`, `src/components/StorySection.tsx`, `src/components/PhoneInput.tsx`, `src/hooks/useActiveEvent.ts`, `src/components/admin/types.ts`, `src/components/admin/RecentActivity.tsx`, `public/og-image.png`
+**Part A (icon CMS) + Part B (consolidation)** — required and small.
+**Plus from Part C:** FRS-G1 (gift progress bars) + FRS-A2 (CSV exports) — high value, low effort.
 
-**Edited**: `src/App.tsx`, `src/components/Navigation.tsx`, `src/pages/Index.tsx`, `src/pages/RSVP.tsx`, `src/pages/Gifts.tsx`, `src/pages/NotFound.tsx`, `src/components/EventTimeline.tsx`, `src/components/admin/AdminDashboard.tsx`, `src/components/admin/OverviewTab.tsx`, `src/components/admin/MessagesTab.tsx`, `src/components/admin/RSVPsTab.tsx`, `src/components/admin/SettingsTab.tsx`, `index.html`
-
-**Migration**: Add `story_milestones jsonb default '[]'` to `site_settings`.
-
----
-
-### Out of Scope (future)
-- i18n (multi-language) — large surface, low immediate ROI
-- QR check-in / digital seating chart — needs new tables + day-of staff workflow
-- Drawn guestbook signatures — niche
+Reply with which Part C items to include (or "all", "none", or a list like "G1, A2, R1") and I'll implement.
