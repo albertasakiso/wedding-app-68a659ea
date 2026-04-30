@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress";
 import { anonymizeEntry, formatGHS } from "@/lib/format-utils";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
+import { GIFT_TYPES, giftTypeShortLabel, giftTypeBadgeClass } from "@/lib/gift-types";
 
 interface GiftWallEntry {
   id: string;
@@ -149,14 +150,7 @@ export default function Gifts() {
     }
   };
 
-  const giftTypeBadge: Record<string, { label: string; cls: string }> = {
-    momo: { label: "MoMo", cls: "bg-yellow-100 text-yellow-800" },
-    bank: { label: "Bank", cls: "bg-blue-100 text-blue-800" },
-    cash: { label: "Cash", cls: "bg-green-100 text-green-800" },
-    physical: { label: "Gift", cls: "bg-purple-100 text-purple-800" },
-    kind: { label: "In Kind", cls: "bg-indigo-100 text-indigo-800" },
-    both: { label: "Cash & Kind", cls: "bg-pink-100 text-pink-800" },
-  };
+  // Gift type metadata sourced from shared module (src/lib/gift-types.ts)
 
   // Aggregate progress: sum of paid/pending payments per option, plus overall.
   const totalsByOption = payments.reduce<Record<string, number>>((acc, p) => {
@@ -345,10 +339,9 @@ export default function Gifts() {
                   <Select value={giftType} onValueChange={setGiftType}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="momo">MoMo</SelectItem>
-                      <SelectItem value="bank">Bank Transfer</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="physical">Physical Gift</SelectItem>
+                      {GIFT_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -438,19 +431,16 @@ export default function Gifts() {
                     if (filtered.length === 0) {
                       return <p className="text-center text-muted-foreground text-sm py-4">No gifts in this category yet</p>;
                     }
-                    return filtered.map((entry) => {
-                      const badge = giftTypeBadge[entry.gift_type] || giftTypeBadge.cash;
-                      return (
-                        <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
-                          <span className="font-sans text-sm font-medium text-foreground">
-                            {anonymizeEntry(entry.donor_name, entry.phone)}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>
-                            {badge.label}
-                          </span>
-                        </div>
-                      );
-                    });
+                    return filtered.map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
+                        <span className="font-sans text-sm font-medium text-foreground">
+                          {anonymizeEntry(entry.donor_name, entry.phone)}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${giftTypeBadgeClass(entry.gift_type)}`}>
+                          {giftTypeShortLabel(entry.gift_type)}
+                        </span>
+                      </div>
+                    ));
                   })()}
                 </div>
               </div>

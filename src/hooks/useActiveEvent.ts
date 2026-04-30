@@ -6,6 +6,8 @@ export interface TimedEvent {
   title: string;
   description?: string | null;
   location?: string | null;
+  icon?: string | null;
+  highlight_color?: string | null;
 }
 
 /**

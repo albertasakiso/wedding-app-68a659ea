@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
           event_time: params.event_time,
           location: params.location,
           order_index: params.order_index || 0,
+          icon: params.icon || "Calendar",
+          highlight_color: params.highlight_color || null,
         });
         if (error) return json({ error: error.message }, 400);
         return json({ success: true });

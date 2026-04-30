@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveEvent, type TimedEvent } from "@/hooks/useActiveEvent";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { buildMapsLinkUrl } from "@/lib/maps-utils";
 
 interface Settings {
   couple_names: string;
@@ -49,12 +50,7 @@ export default function MyDay() {
   const mins = Math.floor((diff / 60_000) % 60);
   void tick;
 
-  const mapsUrl =
-    venue?.latitude && venue?.longitude
-      ? `https://www.google.com/maps/search/?api=1&query=${venue.latitude},${venue.longitude}`
-      : venue?.address
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`
-        : null;
+  const mapsUrl = venue ? buildMapsLinkUrl(venue) : null;
 
   return (
     <div className="min-h-screen bg-background">
