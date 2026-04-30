@@ -441,7 +441,6 @@ export default function Gifts() {
                         </span>
                       </div>
                     ));
-                    });
                   })()}
                 </div>
               </div>
