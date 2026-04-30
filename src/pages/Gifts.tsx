@@ -431,18 +431,16 @@ export default function Gifts() {
                     if (filtered.length === 0) {
                       return <p className="text-center text-muted-foreground text-sm py-4">No gifts in this category yet</p>;
                     }
-                    return filtered.map((entry) => {
-                      const badge = giftTypeBadge[entry.gift_type] || giftTypeBadge.cash;
-                      return (
-                        <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
-                          <span className="font-sans text-sm font-medium text-foreground">
-                            {anonymizeEntry(entry.donor_name, entry.phone)}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>
-                            {badge.label}
-                          </span>
-                        </div>
-                      );
+                    return filtered.map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
+                        <span className="font-sans text-sm font-medium text-foreground">
+                          {anonymizeEntry(entry.donor_name, entry.phone)}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${giftTypeBadgeClass(entry.gift_type)}`}>
+                          {giftTypeShortLabel(entry.gift_type)}
+                        </span>
+                      </div>
+                    ));
                     });
                   })()}
                 </div>
