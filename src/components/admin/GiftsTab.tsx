@@ -16,6 +16,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2, Edit, Eye, EyeOff } from "lucide-react";
+import { GIFT_TYPES, giftTypeLabel, giftTypeBadgeClass } from "@/lib/gift-types";
 
 interface GiftOption {
   id: string;
@@ -178,20 +179,9 @@ export default function GiftsTab({ gifts, payments, giftWall, onRefresh }: Gifts
     giftTotals[p.gift_option_id] = (giftTotals[p.gift_option_id] || 0) + Number(p.amount);
   });
 
-  const giftTypeBadge = (type: string) => {
-    const styles: Record<string, { label: string; cls: string }> = {
-      momo: { label: "MoMo", cls: "bg-yellow-100 text-yellow-800" },
-      bank: { label: "Bank", cls: "bg-blue-100 text-blue-800" },
-      cash: { label: "Cash", cls: "bg-green-100 text-green-700" },
-      physical: { label: "Physical Gift", cls: "bg-purple-100 text-purple-800" },
-      kind: { label: "In Kind", cls: "bg-indigo-100 text-indigo-700" },
-      both: { label: "Cash & Kind", cls: "bg-pink-100 text-pink-700" },
-    };
-    const s = styles[type] || styles.cash;
-    return (
-      <span className={`text-xs px-2 py-1 rounded-full ${s.cls}`}>{s.label}</span>
-    );
-  };
+  const giftTypeBadge = (type: string) => (
+    <span className={`text-xs px-2 py-1 rounded-full ${giftTypeBadgeClass(type)}`}>{giftTypeLabel(type)}</span>
+  );
 
   return (
     <div className="space-y-6">
@@ -273,12 +263,9 @@ export default function GiftsTab({ gifts, payments, giftWall, onRefresh }: Gifts
                 <Select value={wallGiftType} onValueChange={setWallGiftType}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="momo">MoMo</SelectItem>
-                    <SelectItem value="bank">Bank Transfer</SelectItem>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="physical">Physical Gift</SelectItem>
-                    <SelectItem value="kind">In Kind</SelectItem>
-                    <SelectItem value="both">Cash & Kind</SelectItem>
+                    {GIFT_TYPES.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
