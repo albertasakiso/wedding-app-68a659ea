@@ -136,9 +136,20 @@ export default function EventsTab({ events, onRefresh }: EventsTabProps) {
         <p className="text-center text-muted-foreground py-8">No events yet. Add your first event!</p>
       ) : (
         <div className="space-y-3">
-          {events.map((evt) => (
+          {events.map((evt) => {
+            const Icon = getEventIcon(evt.icon);
+            return (
             <Card key={evt.id} className="border-primary/10">
               <CardContent className="pt-4 flex items-start justify-between gap-4">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border"
+                  style={{
+                    backgroundColor: evt.highlight_color ? `${evt.highlight_color}20` : "hsl(var(--primary) / 0.1)",
+                    borderColor: evt.highlight_color || "hsl(var(--primary) / 0.3)",
+                    color: evt.highlight_color || "hsl(var(--primary))",
+                  }}
+                >
+                  <Icon className="h-4 w-4" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-foreground">{evt.title}</h4>
                   {evt.description && <p className="text-sm text-muted-foreground mt-1">{evt.description}</p>}
