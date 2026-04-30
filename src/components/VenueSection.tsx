@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
+import { buildMapsEmbedUrl, buildMapsLinkUrl } from "@/lib/maps-utils";
 
 interface Hotel {
   name: string;
@@ -64,15 +65,8 @@ const VenueSection = () => {
   }, []);
 
   const parkingLines = venue.parking_info?.split("\n").filter(Boolean) || [];
-  const hasCoords = venue.latitude != null && venue.longitude != null;
-  // Google Maps "place" embed works without an API key and opens native maps app on tap
-  const query = hasCoords
-    ? `${venue.latitude},${venue.longitude}`
-    : venue.address || venue.name;
-  const mapEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=16&output=embed`;
-  // Universal link: opens Google Maps app on Android, Apple Maps/Google Maps on iOS, Maps on desktop
-  const mapLinkUrl = venue.map_url
-    || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  const mapEmbedUrl = buildMapsEmbedUrl(venue);
+  const mapLinkUrl = buildMapsLinkUrl(venue);
 
   return (
     <section

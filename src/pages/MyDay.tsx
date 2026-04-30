@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useActiveEvent, type TimedEvent } from "@/hooks/useActiveEvent";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { buildMapsLinkUrl } from "@/lib/maps-utils";
 
 interface Settings {
   couple_names: string;
