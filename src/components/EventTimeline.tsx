@@ -32,8 +32,8 @@ function TimelineCard({ event, index, isActive }: { event: typeof defaultEvents[
     >
       <div
         className={`absolute left-8 md:left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-card border-2 flex items-center justify-center shadow-soft z-10 transition-all ${
-          isActive ? "ring-4 ring-primary/30 animate-pulse" : ""
-        }`}
+          accent ? "" : isActive ? "border-primary" : "border-primary/30"
+        } ${isActive ? "ring-4 ring-primary/30 animate-pulse" : ""}`}
         style={accent ? { borderColor: accent, color: accent } : undefined}
       >
         <Icon className={`w-5 h-5 md:w-6 md:h-6 ${accent ? "" : "text-primary"}`} style={accent ? { color: accent } : undefined} />
