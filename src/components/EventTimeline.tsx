@@ -1,25 +1,22 @@
 import { useEffect, useState } from "react";
-import { Church, Martini, UtensilsCrossed, Music, MapPin, Clock, Calendar } from "lucide-react";
+import { MapPin, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useScrollReveal } from "@/hooks/useScrollReveal";
 import { useActiveEvent } from "@/hooks/useActiveEvent";
-
-const iconMap: Record<string, any> = {
-  Church, Martini, UtensilsCrossed, Music, Calendar,
-};
+import { getEventIcon } from "@/lib/event-icons";
 
 const defaultEvents = [
-  { id: "1", event_time: "2026-05-02T15:00:00Z", title: "Ceremony", description: "Exchange of vows in the garden pavilion.", location: "Rose Garden Pavilion" },
-  { id: "2", event_time: "2026-05-02T16:00:00Z", title: "Cocktail Hour", description: "Enjoy signature cocktails and hors d'oeuvres.", location: "Terrace Lounge" },
-  { id: "3", event_time: "2026-05-02T17:30:00Z", title: "Reception & Dinner", description: "Celebrate with a gourmet dinner and toasts.", location: "Grand Ballroom" },
-  { id: "4", event_time: "2026-05-02T20:00:00Z", title: "Dancing & Celebration", description: "Dance the night away under the stars.", location: "Grand Ballroom & Terrace" },
+  { id: "1", event_time: "2026-05-02T15:00:00Z", title: "Ceremony", description: "Exchange of vows in the garden pavilion.", location: "Rose Garden Pavilion", icon: "Church", highlight_color: null as string | null },
+  { id: "2", event_time: "2026-05-02T16:00:00Z", title: "Cocktail Hour", description: "Enjoy signature cocktails and hors d'oeuvres.", location: "Terrace Lounge", icon: "Martini", highlight_color: null as string | null },
+  { id: "3", event_time: "2026-05-02T17:30:00Z", title: "Reception & Dinner", description: "Celebrate with a gourmet dinner and toasts.", location: "Grand Ballroom", icon: "UtensilsCrossed", highlight_color: null as string | null },
+  { id: "4", event_time: "2026-05-02T20:00:00Z", title: "Dancing & Celebration", description: "Dance the night away under the stars.", location: "Grand Ballroom & Terrace", icon: "Music", highlight_color: null as string | null },
 ];
 
 function TimelineCard({ event, index, isActive }: { event: typeof defaultEvents[0]; index: number; isActive: boolean }) {
   const { ref, isVisible } = useScrollReveal({ threshold: 0.2 });
   const isEven = index % 2 === 0;
-  const icons = [Church, Martini, UtensilsCrossed, Music];
-  const Icon = icons[index % icons.length];
+  const Icon = getEventIcon(event.icon);
+  const accent = event.highlight_color || undefined;
   const time = new Date(event.event_time).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
@@ -33,10 +30,13 @@ function TimelineCard({ event, index, isActive }: { event: typeof defaultEvents[
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      <div className={`absolute left-8 md:left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-card border-2 flex items-center justify-center shadow-soft z-10 transition-all ${
-        isActive ? "border-primary ring-4 ring-primary/30 animate-pulse" : "border-primary/30"
-      }`}>
-        <Icon className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? "text-primary" : "text-primary"}`} />
+      <div
+        className={`absolute left-8 md:left-1/2 -translate-x-1/2 w-12 h-12 md:w-16 md:h-16 rounded-full bg-card border-2 flex items-center justify-center shadow-soft z-10 transition-all ${
+          isActive ? "ring-4 ring-primary/30 animate-pulse" : ""
+        }`}
+        style={accent ? { borderColor: accent, color: accent } : undefined}
+      >
+        <Icon className={`w-5 h-5 md:w-6 md:h-6 ${accent ? "" : "text-primary"}`} style={accent ? { color: accent } : undefined} />
       </div>
 
       <div className={`ml-28 md:ml-0 md:w-1/2 ${isEven ? "md:pr-16 md:text-right" : "md:pl-16 md:text-left"}`}>
