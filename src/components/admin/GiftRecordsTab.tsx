@@ -51,7 +51,7 @@ export default function GiftRecordsTab({ canEdit }: Props) {
     donor_name: "",
     donor_phone: "",
     donor_email: "",
-    gift_type: "cash" as const,
+    gift_type: "cash" as "cash" | "momo" | "bank" | "physical" | "in_kind",
     amount: "",
     description: "",
     received_by: "",
