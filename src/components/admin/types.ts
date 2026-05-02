@@ -1,34 +1,109 @@
-import type { Database } from "@/integrations/supabase/types";
-
-export type RSVPRow = Database["public"]["Tables"]["rsvps"]["Row"];
-export type GiftPaymentRow = Database["public"]["Tables"]["gift_payments"]["Row"];
-export type GiftWallRow = Database["public"]["Tables"]["gift_wall"]["Row"];
-export type GalleryPhotoRow = Database["public"]["Tables"]["gallery_photos"]["Row"];
-export type GiftOptionRow = Database["public"]["Tables"]["gift_options"]["Row"];
-export type EventRow = Database["public"]["Tables"]["events"]["Row"];
-export type SiteSettingsRow = Database["public"]["Tables"]["site_settings"]["Row"];
-export type VenueInfoRow = Database["public"]["Tables"]["venue_info"]["Row"];
-export type EmailListRow = Database["public"]["Tables"]["email_list"]["Row"];
-export type EmailSettingsRow = Database["public"]["Tables"]["email_settings"]["Row"];
-export type PaymentSettingsRow = Database["public"]["Tables"]["payment_settings"]["Row"];
-
-export interface DashboardData {
-  rsvps: RSVPRow[];
-  events: EventRow[];
-  venue: VenueInfoRow | null;
-  photos: GalleryPhotoRow[];
-  settings: SiteSettingsRow | null;
-  email_list: EmailListRow[];
-  gift_options: GiftOptionRow[];
-  gift_payments: GiftPaymentRow[];
-  payment_settings: PaymentSettingsRow | null;
-  email_settings: EmailSettingsRow | null;
-  gift_wall: GiftWallRow[];
-}
-
 export interface StoryMilestone {
   year: string;
   title: string;
   description: string;
-  image_url?: string;
+  icon?: string;
+  image_url?: string | null;
+}
+
+export interface SiteSettingsRow {
+  id?: string;
+  couple_names?: string;
+  wedding_date?: string;
+  hero_image_url?: string | null;
+  dress_code?: string | null;
+  dress_code_colors?: string[] | null;
+  story_milestones?: StoryMilestone[] | null;
+  tagline?: string | null;
+  [key: string]: unknown;
+}
+
+export interface RSVPRow {
+  [key: string]: unknown;
+  id: string;
+  guest_name: string;
+  phone: string | null;
+  email: string | null;
+  attending: boolean | null;
+  plus_one_name: string | null;
+  message: string | null;
+  created_at: string;
+  checked_in_at?: string | null;
+  checked_in_by?: string | null;
+}
+
+export interface GiftWallRow {
+  [key: string]: unknown;
+  id: string;
+  donor_name: string;
+  gift_type: string;
+  message: string | null;
+  is_visible: boolean;
+  phone: string | null;
+  email: string | null;
+  created_at: string;
+}
+
+export interface GiftPaymentRow {
+  [key: string]: unknown;
+  id: string;
+  gift_option_id: string;
+  donor_name: string;
+  donor_email: string | null;
+  donor_phone: string | null;
+  amount: number;
+  currency: string;
+  payment_method: string | null;
+  payment_provider: string | null;
+  payment_reference: string | null;
+  status: string;
+  created_at: string;
+}
+
+export interface GiftRecordRow {
+  id: string;
+  donor_type: "individual" | "family" | "group" | "anonymous";
+  donor_name: string;
+  donor_phone: string | null;
+  donor_email: string | null;
+  gift_type: "cash" | "momo" | "bank" | "physical" | "in_kind";
+  amount: number | null;
+  currency: string;
+  description: string | null;
+  received_by: string | null;
+  received_at: string;
+  notes: string | null;
+  is_visible_on_wall: boolean;
+  thank_you_sent: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditLogRow {
+  id: string;
+  record_id: string | null;
+  action: "create" | "update" | "delete";
+  actor_user_id: string | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  reason: string | null;
+  before: any;
+  after: any;
+  created_at: string;
+}
+
+export interface DashboardData {
+  rsvps: RSVPRow[];
+  events: any[];
+  venue: any;
+  photos: any[];
+  settings: any;
+  email_list: any[];
+  gift_options: any[];
+  gift_payments: GiftPaymentRow[];
+  payment_settings: any;
+  email_settings: any;
+  gift_wall: GiftWallRow[];
+  gift_records: GiftRecordRow[];
+  actor?: { uid: string; role: string; name: string };
 }

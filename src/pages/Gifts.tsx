@@ -67,11 +67,16 @@ export default function Gifts() {
 
   const fetchData = async () => {
     try {
-      const [wallRes, rsvpRes, optionsRes, paymentsRes] = await Promise.all([
+      const [wallRes, recordsRes, rsvpRes, optionsRes, paymentsRes] = await Promise.all([
         supabase
           .from("gift_wall")
           .select("id, donor_name, gift_type, message, phone, created_at")
           .order("created_at", { ascending: false }),
+        supabase
+          .from("gift_records")
+          .select("id, donor_name, gift_type, description, donor_phone, received_at")
+          .eq("is_visible_on_wall", true)
+          .order("received_at", { ascending: false }),
         supabase
           .from("rsvps")
           .select("id, guest_name, phone, created_at")
@@ -85,7 +90,16 @@ export default function Gifts() {
           .from("gift_payments")
           .select("id, amount, gift_option_id, status"),
       ]);
-      setGiftWall(wallRes.data || []);
+      // Merge legacy wall + new records into one stream (new records preferred)
+      const recordsAsWall = (recordsRes.data || []).map((r: any) => ({
+        id: `gr-${r.id}`,
+        donor_name: r.donor_name,
+        gift_type: r.gift_type === "in_kind" ? "kind" : r.gift_type,
+        message: r.description,
+        phone: r.donor_phone,
+        created_at: r.received_at,
+      }));
+      setGiftWall([...recordsAsWall, ...(wallRes.data || [])]);
       setRsvpList(rsvpRes.data || []);
       setGiftOptions(optionsRes.data || []);
       setPayments(paymentsRes.data || []);
