@@ -33,6 +33,7 @@ export interface RSVPRow {
 }
 
 export interface GiftWallRow {
+  [key: string]: unknown;
   id: string;
   donor_name: string;
   gift_type: string;
@@ -44,6 +45,7 @@ export interface GiftWallRow {
 }
 
 export interface GiftPaymentRow {
+  [key: string]: unknown;
   id: string;
   gift_option_id: string;
   donor_name: string;
