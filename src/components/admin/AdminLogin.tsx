@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lock } from "lucide-react";
 import { adminLogin } from "@/lib/admin-api";
@@ -10,6 +11,7 @@ interface AdminLoginProps {
 }
 
 export default function AdminLogin({ onLogin }: AdminLoginProps) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,10 +21,15 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     setError("");
     setLoading(true);
     try {
-      await adminLogin(password);
+      // If email provided -> per-user login. Else legacy password-only super-admin login.
+      if (email.trim()) {
+        await adminLogin(email.trim(), password);
+      } else {
+        await adminLogin(password);
+      }
       onLogin();
     } catch (err: any) {
-      setError(err.message || "Invalid password");
+      setError(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -36,21 +43,37 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
             <Lock className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="font-display text-2xl text-primary">Admin Dashboard</CardTitle>
-          <p className="text-muted-foreground text-sm mt-1">Enter password to continue</p>
+          <p className="text-muted-foreground text-sm mt-1">Sign in to continue</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border-primary/20 focus-visible:ring-primary"
-            />
+            <div>
+              <Label className="text-xs text-muted-foreground">Email (optional for owner)</Label>
+              <Input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border-primary/20 focus-visible:ring-primary"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Password</Label>
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border-primary/20 focus-visible:ring-primary"
+              />
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading || !password}>
               {loading ? "Signing in..." : "Sign In"}
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Owner: leave email empty and use the master password.
+            </p>
           </form>
         </CardContent>
       </Card>
