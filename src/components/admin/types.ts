@@ -3,6 +3,7 @@ export interface StoryMilestone {
   title: string;
   description: string;
   icon?: string;
+  image_url?: string | null;
 }
 
 export interface SiteSettingsRow {
