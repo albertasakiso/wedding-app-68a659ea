@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string
+          password_hash: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name: string
+          password_hash?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          password_hash?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_list: {
         Row: {
           created_at: string
@@ -152,6 +185,45 @@ export type Database = {
         }
         Relationships: []
       }
+      gift_audit_log: {
+        Row: {
+          action: string
+          actor_name: string | null
+          actor_role: string | null
+          actor_user_id: string | null
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          reason: string | null
+          record_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          record_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          actor_role?: string | null
+          actor_user_id?: string | null
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          record_id?: string | null
+        }
+        Relationships: []
+      }
       gift_options: {
         Row: {
           created_at: string
@@ -235,6 +307,84 @@ export type Database = {
           },
         ]
       }
+      gift_records: {
+        Row: {
+          amount: number | null
+          created_at: string
+          created_by_user_id: string | null
+          currency: string
+          description: string | null
+          donor_email: string | null
+          donor_name: string
+          donor_phone: string | null
+          donor_type: string
+          gift_type: string
+          id: string
+          is_visible_on_wall: boolean
+          last_modified_by_user_id: string | null
+          notes: string | null
+          received_at: string
+          received_by: string | null
+          thank_you_sent: boolean
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          description?: string | null
+          donor_email?: string | null
+          donor_name: string
+          donor_phone?: string | null
+          donor_type?: string
+          gift_type?: string
+          id?: string
+          is_visible_on_wall?: boolean
+          last_modified_by_user_id?: string | null
+          notes?: string | null
+          received_at?: string
+          received_by?: string | null
+          thank_you_sent?: boolean
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          created_by_user_id?: string | null
+          currency?: string
+          description?: string | null
+          donor_email?: string | null
+          donor_name?: string
+          donor_phone?: string | null
+          donor_type?: string
+          gift_type?: string
+          id?: string
+          is_visible_on_wall?: boolean
+          last_modified_by_user_id?: string | null
+          notes?: string | null
+          received_at?: string
+          received_by?: string | null
+          thank_you_sent?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gift_records_created_by_user_id_fkey"
+            columns: ["created_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gift_records_last_modified_by_user_id_fkey"
+            columns: ["last_modified_by_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gift_wall: {
         Row: {
           created_at: string
@@ -298,6 +448,8 @@ export type Database = {
       rsvps: {
         Row: {
           attending: boolean | null
+          checked_in_at: string | null
+          checked_in_by: string | null
           created_at: string
           email: string | null
           guest_name: string
@@ -308,6 +460,8 @@ export type Database = {
         }
         Insert: {
           attending?: boolean | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
           created_at?: string
           email?: string | null
           guest_name: string
@@ -318,6 +472,8 @@ export type Database = {
         }
         Update: {
           attending?: boolean | null
+          checked_in_at?: string | null
+          checked_in_by?: string | null
           created_at?: string
           email?: string | null
           guest_name?: string
@@ -364,6 +520,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venue_info: {
         Row: {
           address: string | null
@@ -405,10 +590,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "super_admin" | "admin" | "gift_recorder" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -535,6 +726,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["super_admin", "admin", "gift_recorder", "viewer"],
+    },
   },
 } as const
