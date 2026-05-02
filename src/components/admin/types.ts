@@ -1,4 +1,24 @@
+export interface StoryMilestone {
+  year: string;
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+export interface SiteSettingsRow {
+  id?: string;
+  couple_names?: string;
+  wedding_date?: string;
+  hero_image_url?: string | null;
+  dress_code?: string | null;
+  dress_code_colors?: string[] | null;
+  story_milestones?: StoryMilestone[] | null;
+  tagline?: string | null;
+  [key: string]: unknown;
+}
+
 export interface RSVPRow {
+  [key: string]: unknown;
   id: string;
   guest_name: string;
   phone: string | null;
