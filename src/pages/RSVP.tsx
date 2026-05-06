@@ -239,7 +239,7 @@ const RSVP = () => {
               <span className="text-primary">RSVP</span>
             </h1>
             <p className="text-muted-foreground font-body text-lg">
-              Please respond by April 1st, 2026
+              Please respond by {rsvpByLabel}
             </p>
           </div>
 

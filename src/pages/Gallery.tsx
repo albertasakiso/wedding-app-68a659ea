@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeTable } from "@/hooks/useRealtimeTable";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import PhotoUploadCard from "@/components/PhotoUploadCard";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Camera, ArrowLeft, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
@@ -175,7 +175,7 @@ const Gallery = () => {
               </div>
               <div className="text-center mt-12">
                 <p className="text-muted-foreground font-body text-lg">
-                  Be the first to share a moment — upload above.
+                  Photos will appear here after the wedding.
                 </p>
               </div>
             </div>
