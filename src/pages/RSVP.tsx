@@ -17,6 +17,8 @@ import PhoneInput from "@/components/PhoneInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Heart, ArrowLeft, Check, Loader2, Calendar, MapPin, Download, Search } from "lucide-react";
 import { generateGoogleCalendarUrl, downloadICSFile, getGoogleMapsUrl, type CalendarEvent } from "@/lib/calendar-utils";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
+import { formatRsvpBy } from "@/lib/date-utils";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
@@ -36,6 +38,8 @@ type RSVPFormData = z.infer<typeof rsvpSchema>;
 
 const RSVP = () => {
   const navigate = useNavigate();
+  const { data: settings } = useSiteSettings();
+  const rsvpByLabel = formatRsvpBy(settings?.wedding_date, 30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [guestCount, setGuestCount] = useState<number | null>(null);
