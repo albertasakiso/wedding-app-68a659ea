@@ -4,6 +4,8 @@ import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ShareInvite from "@/components/ShareInvite";
+import Logo from "@/components/Logo";
+import { formatWeddingDate } from "@/lib/date-utils";
 
 interface SiteSettings {
   couple_names: string;
@@ -41,11 +43,7 @@ const Hero = () => {
 
   const weddingDate = new Date(settings.wedding_date);
   const names = settings.couple_names.split("&").map((n) => n.trim());
-  const dateStr = weddingDate.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const dateStr = formatWeddingDate(settings.wedding_date, "ordinal");
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -86,15 +84,15 @@ const Hero = () => {
       <div className="hidden md:block absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <p className="text-muted-foreground text-lg md:text-xl font-body tracking-[0.3em] uppercase mb-6 animate-fade-in">
+        <div className="flex justify-center mb-6 animate-fade-in">
+          <Logo className="h-32 sm:h-40 md:h-56 lg:h-64 w-auto" />
+        </div>
+
+        <p className="text-muted-foreground text-base md:text-lg font-body tracking-[0.3em] uppercase mb-6 animate-fade-in">
           {settings.tagline}
         </p>
 
-        <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-semibold text-foreground mb-4 animate-slide-up">
-          <span className="text-primary">{names[0] || "Albert"}</span>
-          <span className="mx-4 text-primary/60">&</span>
-          <span className="text-primary">{names[1] || "Ruby"}</span>
-        </h1>
+        <h1 className="sr-only">{names[0] || "Albert"} &amp; {names[1] || "Ruby"} — Wedding</h1>
 
         <div className="flex items-center justify-center gap-4 my-8 animate-fade-in" style={{ animationDelay: "0.3s" }}>
           <div className="h-px w-16 md:w-24 bg-gradient-to-r from-transparent to-primary/50" />

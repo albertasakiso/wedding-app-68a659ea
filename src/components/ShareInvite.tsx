@@ -15,6 +15,7 @@ export default function ShareInvite({ coupleNames, dateStr }: ShareInviteProps) 
 
   const url = typeof window !== "undefined" ? window.location.origin : "";
   const text = `You're invited to ${coupleNames}'s wedding on ${dateStr}! 💍 RSVP here: ${url}`;
+  void text;
 
   const tryNativeShare = async () => {
     if (navigator.share) {
