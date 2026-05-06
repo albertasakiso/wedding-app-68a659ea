@@ -13,19 +13,21 @@ function json(data: unknown, status = 200) {
   });
 }
 
-async function sendBrevoEmail(apiKey: string, to: { email: string; name?: string }, subject: string, htmlContent: string, sender: { name: string; email: string }) {
+async function sendBrevoEmail(apiKey: string, to: { email: string; name?: string }, subject: string, htmlContent: string, sender: { name: string; email: string }, replyTo?: string | null) {
+  const payload: Record<string, unknown> = {
+    sender: { name: sender.name, email: sender.email },
+    to: [{ email: to.email, name: to.name || to.email }],
+    subject,
+    htmlContent,
+  };
+  if (replyTo) payload.replyTo = { email: replyTo };
   const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
       "api-key": apiKey,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      sender: { name: sender.name, email: sender.email },
-      to: [{ email: to.email, name: to.name || to.email }],
-      subject,
-      htmlContent,
-    }),
+    body: JSON.stringify(payload),
   });
   return resp.json();
 }
