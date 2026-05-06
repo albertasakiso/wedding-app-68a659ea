@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock } from "lucide-react";
 import { adminLogin } from "@/lib/admin-api";
+import Logo from "@/components/Logo";
 
 interface AdminLoginProps {
   onLogin: () => void;
@@ -39,8 +39,8 @@ export default function AdminLogin({ onLogin }: AdminLoginProps) {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md border-primary/20">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Lock className="h-8 w-8 text-primary" />
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <Logo className="h-20 w-auto" />
           </div>
           <CardTitle className="font-display text-2xl text-primary">Admin Dashboard</CardTitle>
           <p className="text-muted-foreground text-sm mt-1">Sign in to continue</p>
