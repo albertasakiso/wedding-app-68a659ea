@@ -90,8 +90,10 @@ export type Database = {
           rsvp_notification_enabled: boolean
           rsvp_reminder_message: string | null
           rsvp_reminder_subject: string | null
+          sender_domain: string | null
           sender_email: string | null
           sender_name: string
+          sender_reply_to: string | null
         }
         Insert: {
           admin_email?: string | null
@@ -105,8 +107,10 @@ export type Database = {
           rsvp_notification_enabled?: boolean
           rsvp_reminder_message?: string | null
           rsvp_reminder_subject?: string | null
+          sender_domain?: string | null
           sender_email?: string | null
           sender_name?: string
+          sender_reply_to?: string | null
         }
         Update: {
           admin_email?: string | null
@@ -120,8 +124,10 @@ export type Database = {
           rsvp_notification_enabled?: boolean
           rsvp_reminder_message?: string | null
           rsvp_reminder_subject?: string | null
+          sender_domain?: string | null
           sender_email?: string | null
           sender_name?: string
+          sender_reply_to?: string | null
         }
         Relationships: []
       }

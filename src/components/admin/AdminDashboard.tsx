@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell, History, Shield, Contact, QrCode } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell, History, Shield, Contact, QrCode, ExternalLink } from "lucide-react";
 import { adminApi, clearAdminToken, getAdminUser } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -50,7 +50,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
               <h1 className="font-display text-xl text-primary">Gift Records</h1>
               <p className="text-xs text-muted-foreground">Signed in as {user?.name} · Gift Recorder</p>
             </div>
-            <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground"><LogOut className="h-4 w-4" /> Logout</Button>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm" className="gap-2">
+                <a href="/" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View Site</a>
+              </Button>
+              <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground"><LogOut className="h-4 w-4" /> Logout</Button>
+            </div>
           </div>
         </header>
         <main className="max-w-7xl mx-auto px-4 py-6">
@@ -104,7 +109,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <h1 className="font-display text-xl text-primary">Wedding Admin</h1>
             {user && <p className="text-xs text-muted-foreground">Signed in as {user.name} · {role}</p>}
           </div>
-          <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground"><LogOut className="h-4 w-4" /> Logout</Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="gap-2">
+              <a href="/" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" /> View Site</a>
+            </Button>
+            <Button variant="ghost" onClick={handleLogout} className="gap-2 text-muted-foreground"><LogOut className="h-4 w-4" /> Logout</Button>
+          </div>
         </div>
       </header>
 

@@ -13,19 +13,21 @@ function json(data: unknown, status = 200) {
   });
 }
 
-async function sendBrevoEmail(apiKey: string, to: { email: string; name?: string }, subject: string, htmlContent: string, sender: { name: string; email: string }) {
+async function sendBrevoEmail(apiKey: string, to: { email: string; name?: string }, subject: string, htmlContent: string, sender: { name: string; email: string }, replyTo?: string | null) {
+  const payload: Record<string, unknown> = {
+    sender: { name: sender.name, email: sender.email },
+    to: [{ email: to.email, name: to.name || to.email }],
+    subject,
+    htmlContent,
+  };
+  if (replyTo) payload.replyTo = { email: replyTo };
   const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
       "api-key": apiKey,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      sender: { name: sender.name, email: sender.email },
-      to: [{ email: to.email, name: to.name || to.email }],
-      subject,
-      htmlContent,
-    }),
+    body: JSON.stringify(payload),
   });
   return resp.json();
 }
@@ -114,7 +116,7 @@ Deno.serve(async (req) => {
           </div>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: params.guest_email, name: params.guest_name }, customSubject, html, sender);
+        await sendBrevoEmail(BREVO_API_KEY, { email: params.guest_email, name: params.guest_name }, customSubject, html, sender, settings?.sender_reply_to);
         return json({ sent: true });
       }
 
@@ -134,7 +136,7 @@ Deno.serve(async (req) => {
           <p style="color:#999;font-size:13px;text-align:center;">Total RSVPs: ${count || "?"}</p>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: adminEmail }, `New RSVP: ${params.guest_name}`, html, sender);
+        await sendBrevoEmail(BREVO_API_KEY, { email: adminEmail }, `New RSVP: ${params.guest_name}`, html, sender, settings?.sender_reply_to);
         return json({ sent: true });
       }
 
@@ -155,7 +157,7 @@ Deno.serve(async (req) => {
           </div>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: params.donor_email, name: params.donor_name }, customSubject, html, sender);
+        await sendBrevoEmail(BREVO_API_KEY, { email: params.donor_email, name: params.donor_name }, customSubject, html, sender, settings?.sender_reply_to);
         return json({ sent: true });
       }
 
@@ -172,7 +174,7 @@ Deno.serve(async (req) => {
           </div>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: adminEmail }, `Gift: ${params.currency} ${params.amount} from ${params.donor_name}`, html, sender);
+        await sendBrevoEmail(BREVO_API_KEY, { email: adminEmail }, `Gift: ${params.currency} ${params.amount} from ${params.donor_name}`, html, sender, settings?.sender_reply_to);
         return json({ sent: true });
       }
 
@@ -207,7 +209,7 @@ Deno.serve(async (req) => {
           `);
 
           try {
-            await sendBrevoEmail(BREVO_API_KEY, { email: guest.guest_email, name: guest.guest_name }, subject, html, sender);
+            await sendBrevoEmail(BREVO_API_KEY, { email: guest.guest_email, name: guest.guest_name }, subject, html, sender, settings?.sender_reply_to);
             sentCount++;
           } catch (e) {
             console.error(`Failed to send reminder to ${guest.guest_email}:`, e);

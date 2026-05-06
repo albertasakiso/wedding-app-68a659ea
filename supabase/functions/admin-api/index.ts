@@ -290,6 +290,60 @@ Deno.serve(async (req) => {
         else { const { error } = await supabase.from("email_settings").insert(updates); if (error) return json({ error: error.message }, 400); }
         return json({ success: true });
       }
+      case "verify-brevo-key": {
+        const key = Deno.env.get("BREVO_API_KEY");
+        if (!key) return json({ ok: false, message: "BREVO_API_KEY secret is not configured" });
+        try {
+          const r = await fetch("https://api.brevo.com/v3/account", { headers: { "api-key": key, "Accept": "application/json" } });
+          const data = await r.json();
+          if (!r.ok) return json({ ok: false, message: data?.message || `Brevo returned ${r.status}` });
+          return json({ ok: true, email: data?.email, companyName: data?.companyName, plan: data?.plan?.[0]?.type });
+        } catch (e) {
+          return json({ ok: false, message: (e as Error).message });
+        }
+      }
+      case "send-test-email": {
+        const key = Deno.env.get("BREVO_API_KEY");
+        if (!key) return json({ ok: false, message: "BREVO_API_KEY secret is not configured" });
+        const recipient: string = (params.recipient || "").trim();
+        if (!recipient) return json({ ok: false, message: "Recipient email is required" }, 400);
+
+        const { data: s } = await supabase.from("email_settings").select("*").limit(1).maybeSingle();
+        const senderEmail = s?.sender_email;
+        const senderName = s?.sender_name || "Wedding";
+        const replyTo = s?.sender_reply_to || null;
+        if (!senderEmail) return json({ ok: false, message: "Sender email not set in settings" });
+
+        const html = `<!DOCTYPE html><html><body style="font-family:Georgia,serif;background:#fff;padding:40px;">
+          <div style="max-width:560px;margin:0 auto;border:1px solid #e8e0d4;border-radius:8px;padding:32px;text-align:center;">
+            <h1 style="color:#8B7355;margin:0 0 12px;">Test Email ✓</h1>
+            <p style="color:#555;line-height:1.6;">If you can read this, your Brevo configuration is working correctly.</p>
+            <p style="color:#999;font-size:13px;margin-top:24px;">From: ${senderName} &lt;${senderEmail}&gt;${replyTo ? `<br/>Reply-To: ${replyTo}` : ""}</p>
+            <p style="color:#999;font-size:12px;margin-top:24px;">Sent from your wedding admin · ${new Date().toLocaleString()}</p>
+          </div>
+        </body></html>`;
+
+        const payload: Record<string, unknown> = {
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email: recipient }],
+          subject: `Test email from ${senderName}`,
+          htmlContent: html,
+        };
+        if (replyTo) payload.replyTo = { email: replyTo };
+
+        try {
+          const r = await fetch("https://api.brevo.com/v3/smtp/email", {
+            method: "POST",
+            headers: { "api-key": key, "Content-Type": "application/json", "Accept": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await r.json();
+          if (!r.ok) return json({ ok: false, message: data?.message || `Brevo returned ${r.status}` });
+          return json({ ok: true, messageId: data?.messageId });
+        } catch (e) {
+          return json({ ok: false, message: (e as Error).message });
+        }
+      }
       case "insert-gift-wall": {
         const { error } = await supabase.from("gift_wall").insert({
           donor_name: params.donor_name, gift_type: params.gift_type || "kind", message: params.message || null,
