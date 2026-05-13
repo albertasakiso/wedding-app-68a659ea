@@ -95,29 +95,73 @@ Deno.serve(async (req) => {
         if (!settings?.rsvp_notification_enabled) return json({ skipped: true });
         if (!params.guest_email) return json({ skipped: true, reason: "no email" });
 
-        const customSubject = replaceVars(
-          settings?.rsvp_confirmation_subject || "RSVP Confirmation — Albert & Ruby Wedding",
-          { guest_name: params.guest_name, attending: params.attending ? "Yes" : "No" }
-        );
-        const customMessage = replaceVars(
-          settings?.rsvp_confirmation_message || "Thank you for your RSVP! We can't wait to celebrate with you.",
-          { guest_name: params.guest_name, attending: params.attending ? "Yes" : "No" }
-        );
+        // Wedding details for warm context
+        const { data: siteSettings } = await supabase.from("site_settings").select("*").limit(1).single();
+        const { data: venueInfo } = await supabase.from("venue_info").select("*").limit(1).single();
+        const weddingDate = siteSettings?.wedding_date
+          ? new Date(siteSettings.wedding_date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })
+          : "our wedding day";
+        const venueName = venueInfo?.name || "";
+        const venueAddress = venueInfo?.address || "";
 
+        // Build a site URL for CTAs (origin header → settings → fallback)
+        const originHeader = req.headers.get("origin") || req.headers.get("referer") || "";
+        const siteUrl = (params.site_url || originHeader || (siteSettings as any)?.site_url || "").replace(/\/$/, "");
+        const giftsUrl = siteUrl ? `${siteUrl}/gifts` : "/gifts";
+        const homeUrl = siteUrl || "/";
+
+        if (params.attending) {
+          const customSubject = replaceVars(
+            settings?.rsvp_confirmation_subject || "RSVP Confirmation — Albert & Ruby Wedding",
+            { guest_name: params.guest_name, attending: "Yes" }
+          );
+          const customMessage = replaceVars(
+            settings?.rsvp_confirmation_message || "Thank you for your RSVP! We can't wait to celebrate with you.",
+            { guest_name: params.guest_name, attending: "Yes" }
+          );
+
+          const html = wrapHtml(`
+            <h1 style="color:#8B7355;font-size:28px;text-align:center;margin-bottom:10px;font-family:Georgia,serif;">Thank you, ${params.guest_name}!</h1>
+            <p style="color:#8B7355;font-size:14px;text-align:center;letter-spacing:2px;text-transform:uppercase;margin:0 0 24px;">Your RSVP is confirmed</p>
+            <p style="color:#555;font-size:16px;line-height:1.7;text-align:center;">${customMessage}</p>
+            <p style="color:#555;font-size:16px;line-height:1.7;text-align:center;">We can't wait to share this special day with you and look forward to celebrating together.</p>
+            <div style="background:#faf8f5;border-radius:10px;padding:24px;margin:28px 0;text-align:center;">
+              <p style="color:#8B7355;font-size:18px;margin:0;font-weight:bold;">${weddingDate}</p>
+              ${venueName ? `<p style="color:#8B7355;font-size:15px;margin:10px 0 0;">${venueName}${venueAddress ? `<br><span style="color:#a89680;font-size:13px;">${venueAddress}</span>` : ""}</p>` : ""}
+              ${params.plus_one_name ? `<p style="color:#a89680;font-size:13px;margin:14px 0 0;">Plus one: <strong>${params.plus_one_name}</strong></p>` : ""}
+            </div>
+            <div style="text-align:center;margin:30px 0;">
+              <a href="${homeUrl}" style="display:inline-block;background:#8B7355;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;letter-spacing:1px;">Visit Our Wedding Site</a>
+            </div>
+            <p style="color:#999;font-size:13px;text-align:center;font-style:italic;margin-top:24px;">With love,<br>Albert &amp; Ruby</p>
+          `);
+
+          await sendBrevoEmail(BREVO_API_KEY, { email: params.guest_email, name: params.guest_name }, customSubject, html, sender, settings?.sender_reply_to);
+          return json({ sent: true, variant: "attending" });
+        }
+
+        // Not attending — warm, understanding, gentle gift nudge
+        const subject = "We'll miss you — Albert & Ruby";
         const html = wrapHtml(`
-          <h1 style="color:#8B7355;font-size:28px;text-align:center;margin-bottom:20px;">Thank You, ${params.guest_name}!</h1>
-          <p style="color:#555;font-size:16px;line-height:1.6;text-align:center;">
-            ${customMessage}
+          <h1 style="color:#8B7355;font-size:28px;text-align:center;margin-bottom:10px;font-family:Georgia,serif;">We'll miss you, ${params.guest_name}</h1>
+          <p style="color:#8B7355;font-size:14px;text-align:center;letter-spacing:2px;text-transform:uppercase;margin:0 0 24px;">RSVP received</p>
+          <p style="color:#555;font-size:16px;line-height:1.7;text-align:center;">
+            Thank you for letting us know. We completely understand, and though you won't be with us in person on ${weddingDate}, please know you'll be in our hearts on the day.
           </p>
-          <div style="background:#faf8f5;border-radius:8px;padding:20px;margin:20px 0;">
-            <p style="color:#8B7355;font-size:14px;margin:0;"><strong>Name:</strong> ${params.guest_name}</p>
-            <p style="color:#8B7355;font-size:14px;margin:8px 0 0;"><strong>Attending:</strong> ${params.attending ? "Yes" : "No"}</p>
-            ${params.plus_one_name ? `<p style="color:#8B7355;font-size:14px;margin:8px 0 0;"><strong>Plus One:</strong> ${params.plus_one_name}</p>` : ""}
+          <div style="background:#faf8f5;border-radius:10px;padding:24px;margin:28px 0;">
+            <p style="color:#8B7355;font-size:15px;line-height:1.7;margin:0;text-align:center;">
+              If you'd still like to be part of our celebration, you can send a blessing or contribute a gift through our gift page — MTN MoMo, Telecel Cash and GCB transfer details are all there.
+            </p>
+            <div style="text-align:center;margin-top:18px;">
+              <a href="${giftsUrl}" style="display:inline-block;background:#8B7355;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;letter-spacing:1px;">Send a Gift or Blessing</a>
+            </div>
           </div>
+          <p style="color:#555;font-size:15px;line-height:1.7;text-align:center;">Thank you for your love and support. It means the world to us.</p>
+          <p style="color:#999;font-size:13px;text-align:center;font-style:italic;margin-top:24px;">With love,<br>Albert &amp; Ruby</p>
         `);
 
-        await sendBrevoEmail(BREVO_API_KEY, { email: params.guest_email, name: params.guest_name }, customSubject, html, sender, settings?.sender_reply_to);
-        return json({ sent: true });
+        await sendBrevoEmail(BREVO_API_KEY, { email: params.guest_email, name: params.guest_name }, subject, html, sender, settings?.sender_reply_to);
+        return json({ sent: true, variant: "not-attending" });
       }
 
       case "send-rsvp-admin-alert": {
