@@ -296,6 +296,22 @@ const RSVP = () => {
                   )}
                 />
 
+                {/* Email (optional, used for confirmation + gift comms) */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-display text-lg">Email Address (Optional)</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="your@email.com" className="border-primary/20 focus:border-primary" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">We'll use this to send your RSVP confirmation and updates about gifts received.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Attending */}
                 <FormField
                   control={form.control}
