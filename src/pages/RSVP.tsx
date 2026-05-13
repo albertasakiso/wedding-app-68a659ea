@@ -391,22 +391,6 @@ const RSVP = () => {
                   )}
                 />
 
-                {/* Email (shown only when receive_photos is checked) */}
-                {receivePhotos && (
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-display text-lg">Email Address</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="your@email.com" className="border-primary/20 focus:border-primary" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 {/* Submit */}
                 <Button
