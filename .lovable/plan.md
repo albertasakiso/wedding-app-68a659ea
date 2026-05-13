@@ -1,86 +1,53 @@
-## Round 6 — Branding, Polish & Email Hardening
+## 1. New logo: interlocking gold rings with A & R
 
-### 1. Wedding Logo Everywhere
-- Copy uploaded logo → `src/assets/wedding-logo.png` and `public/wedding-logo.png` (favicon + OG share).
-- `index.html`: replace favicon, `apple-touch-icon`, `og:image`, `twitter:image` with `/wedding-logo.png`. Update title/description to remove hardcoded "May 2, 2026" — keep evergreen ("Apiligu Albert & Ruby — Our Wedding").
-- Delete old `public/favicon.ico`.
-- `Hero.tsx`: render logo image above (or replacing) the typed names; keep names accessible via `alt` and visually-hidden `<h1>` for SEO.
-- `Navigation.tsx`: small logo mark to the left of "A & R" text (keep text on desktop, logo-only on mobile).
-- `Footer.tsx`: small centered logo above couple names.
-- `AdminLogin.tsx`: logo above the login card.
+Generate a premium-quality logo image with `imagegen` (transparent PNG):
+- Two overlapping/interlocking gold rings (warm champagne gold gradient, subtle metallic shading).
+- Inside the left ring: elegant serif **A**. Inside the right ring: elegant serif **R**.
+- Centered, balanced, no extra text, transparent background.
+- 1024×1024 source for crispness on favicon, OG share, and hero.
 
-### 2. Mobile Navigation Fix
-- Audit current `Navigation.tsx`: mobile menu sits on `absolute top-full` inside a `fixed` nav — works, but spacing/contrast on mobile + active route highlight + tap-target sizing are off, and items overflow on small screens.
-- Rebuild mobile menu using shadcn `Sheet` (slide-in from right) for reliable behavior on iOS Safari and to fit all 7 links comfortably with bigger tap targets, dividers, and clear active state.
-- Ensure logo + hamburger sit on the same row at all viewports; close menu on route change automatically.
+Save to:
+- `src/assets/wedding-logo.png` (replace existing — used by `<Logo />` component)
+- `public/wedding-logo.png` (replace existing — used by favicon, OG, Apple touch)
 
-### 3. Dynamic Dates Across Site (driven by `site_settings.wedding_date`)
-- New util `src/lib/date-utils.ts` exporting `formatWeddingDate(date, style)` with styles: `long` ("May 2nd, 2026"), `short` ("May 2, 2026"), `weekday` ("Saturday, May 2, 2026"), `iso`.
-- New shared hook `src/hooks/useSiteSettings.ts` (cached via React Query) so every component reads the same source.
-- Replace hardcoded date strings in:
-  - `Footer.tsx` ("May 2nd, 2026" + © year).
-  - `RSVP.tsx` ("Please respond by April 1st, 2026" → derive RSVP-by as wedding date − 30 days, configurable later).
-  - `Hero.tsx` (already dynamic; just confirm and add fallback).
-  - `ShareInvite.tsx` invitation text uses settings date.
-  - `index.html` `<title>` & meta become evergreen (cannot read DB at build time).
-  - Email templates in `email-notifications/index.ts` already pull `wedding_date` — verify and add a default fallback.
+Because `Logo.tsx` imports `@/assets/wedding-logo.png` and `index.html` references `/wedding-logo.png`, **simply replacing both files propagates the new logo everywhere**:
+- Favicon + Apple touch icon + OG/Twitter share image (`index.html` already wired)
+- Navigation bar (`Navigation.tsx` uses `<Logo />`)
+- Mobile sheet header (already uses `<Logo />`)
+- Footer (`Footer.tsx` uses `<Logo />`)
+- Hero section (`Hero.tsx` uses `<Logo />`)
+- Admin login (`AdminLogin.tsx` uses `<Logo />`)
 
-### 4. Admin → "View Public Site" Link
-- Add a "View Site" button (opens `/` in a new tab) in `AdminDashboard.tsx` header, next to the user info (both full admin and gift-recorder views).
+QA: visually inspect the generated PNG at multiple sizes before delivery; regenerate if rings/letters are unbalanced.
 
-### 5. Remove Public Photo Upload
-- Delete the `<PhotoUploadCard />` usage from `src/pages/Gallery.tsx`.
-- Replace empty-state CTA "Be the first to share a moment — upload above" with "Photos will appear here after the wedding."
-- Tighten RLS: drop the public INSERT policy on `gallery_photos` so only admin-API (service role) can insert. Migration:
-  ```sql
-  DROP POLICY IF EXISTS "Anyone can upload photos" ON public.gallery_photos;
-  ```
-- Keep `PhotoUploadCard.tsx` file in place for now (unused, no harm) or delete to keep tree clean — will delete.
+## 2. Customized RSVP auto-reply email
 
-### 6. Email Configuration Hardening (Brevo only, per your direction)
-Stay on Brevo (no Resend / no SMTP fork — keeps things simple as you requested). Improvements:
+Update `supabase/functions/email-notifications/index.ts` so the **guest confirmation email** branches on `attending`:
 
-- **Sender domain & reply-to**: add columns `sender_reply_to TEXT`, `sender_domain TEXT` to `email_settings`. Surface in `EmailSettingsTab.tsx`. Helps Brevo deliverability when sender_email matches a verified Brevo sender.
-- **Connection status indicator**: small panel in `EmailSettingsTab` that hits a new admin-api action `verify-brevo-key` → calls Brevo `/v3/account` to confirm key works and shows the verified company/email.
-- **Test email button**: new admin-api action `send-test-email` → uses the saved settings to send a styled test message to the admin email (or a custom address typed inline). Status + Brevo response shown inline.
-- **Use settings for ALL sends**: `email-notifications` already reads `email_settings`; verify each branch (RSVP confirm, RSVP admin alert, gift thank-you, gift admin alert, RSVP reminder bulk) uses `sender_name`, `sender_email`, and (new) `reply_to`. Add `replyTo` to the Brevo payload helper.
-- **Deliverability hints in UI**: copy under "Sender Email" warning that this address must be a *verified sender* in Brevo (link out to Brevo senders page); copy under "Sender Domain" recommends adding SPF + DKIM records in Brevo for higher inbox rates.
+**Attending** — current warm confirmation, refined:
+- Subject: existing `rsvp_confirmation_subject`
+- Body: "We can't wait to celebrate with you on {wedding_date} at {venue_name}." + venue address + dress code reminder + link back to site.
 
-### 7. Memory Update
-- Update `mem://technical/email-integration` to record: Brevo only, settings-driven sender + reply-to + test send, no SMTP/Resend split.
-- Add `mem://design/branding-logo` noting logo file path + usage points.
+**Not attending** — new compassionate variant:
+- Subject: "We'll miss you — Albert & Ruby"
+- Body: warmly acknowledge they can't make it, say they'll be missed, gently mention the Gifts page as a way to still be part of the celebration with a clear CTA button to `/gifts`.
+- Include a brief line: "If you'd like to send a blessing instead, our gift page lists MoMo, Telecel and GCB options."
 
----
+Both variants:
+- Use the existing Brevo sender (`sender_name`, `sender_email`, `sender_reply_to`) — no new config.
+- Use the same gold/ivory HTML email shell already in the function for visual consistency with the new logo (embed `<img src="https://<site>/wedding-logo.png">` at the top).
+- Continue to honor `rsvp_notification_enabled` toggle.
+- Pull `wedding_date`, `venue_name`, `venue_address` dynamically (already available in the function via `site_settings` / `venues`).
 
-## Technical Implementation Details
+Admin notification email to the couple is unchanged.
 
-**Files created**
-- `src/assets/wedding-logo.png` (copied from upload)
-- `public/wedding-logo.png` (favicon/OG)
-- `src/lib/date-utils.ts`
-- `src/hooks/useSiteSettings.ts`
-- `src/components/Logo.tsx` (sized variants)
+## 3. Memory update
 
-**Files edited**
-- `index.html` (favicon, OG, title)
-- `src/components/Navigation.tsx` (Sheet-based mobile menu, logo)
-- `src/components/Footer.tsx` (logo, dynamic date)
-- `src/components/Hero.tsx` (logo + dynamic)
-- `src/components/ShareInvite.tsx` (dynamic date in share text)
-- `src/pages/RSVP.tsx` (dynamic respond-by date)
-- `src/pages/Gallery.tsx` (remove upload card)
-- `src/components/admin/AdminLogin.tsx` (logo)
-- `src/components/admin/AdminDashboard.tsx` ("View Site" button)
-- `src/components/admin/EmailSettingsTab.tsx` (reply-to + domain + verify + test)
-- `supabase/functions/admin-api/index.ts` (new actions: `verify-brevo-key`, `send-test-email`, updated `update-email-settings`)
-- `supabase/functions/email-notifications/index.ts` (use `reply_to`)
+Update `mem://design/branding-logo` to note the new "interlocking gold rings A & R" design and that swapping the two PNG files is the canonical update path.
 
-**Files deleted**
-- `public/favicon.ico`
-- `src/components/PhotoUploadCard.tsx`
+## Technical notes
 
-**DB migration (single)**
-- `ALTER TABLE email_settings ADD COLUMN sender_reply_to TEXT, ADD COLUMN sender_domain TEXT;`
-- `DROP POLICY "Anyone can upload photos" ON gallery_photos;`
-
-No new secrets needed (Brevo key already present).
+- Files touched: `src/assets/wedding-logo.png` (replace), `public/wedding-logo.png` (replace), `supabase/functions/email-notifications/index.ts` (branching + not-attending template), `mem://design/branding-logo` (note).
+- No DB migration. No new secrets. No new edge functions.
+- No frontend component edits needed — `<Logo />` consumers automatically get the new asset.
+- Edge function auto-deploys on save.
