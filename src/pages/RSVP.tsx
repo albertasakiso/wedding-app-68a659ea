@@ -71,7 +71,7 @@ const RSVP = () => {
 
   const attending = form.watch("attending");
   const hasPlussOne = form.watch("has_plus_one");
-  const receivePhotos = form.watch("receive_photos");
+  
 
   const onSubmit = async (data: RSVPFormData) => {
     setIsSubmitting(true);
