@@ -23,16 +23,26 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 
-const rsvpSchema = z.object({
-  guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
-  phone: z.string().trim().min(6, "Phone number is required").max(20),
-  attending: z.boolean(),
-  has_plus_one: z.boolean(),
-  plus_one_name: z.string().trim().max(100).optional(),
-  message: z.string().trim().max(1000).optional(),
-  receive_photos: z.boolean(),
-  email: z.string().trim().email("Please enter a valid email").max(255).optional().or(z.literal("")),
-});
+const rsvpSchema = z
+  .object({
+    guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+    phone: z.string().trim().min(6, "Phone number is required").max(20),
+    attending: z.boolean(),
+    has_plus_one: z.boolean(),
+    plus_one_name: z.string().trim().max(100).optional(),
+    message: z.string().trim().max(1000).optional(),
+    receive_photos: z.boolean(),
+    email: z.string().trim().email("Please enter a valid email").max(255).optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (data.receive_photos && !data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["email"],
+        message: "Email is required to receive event photos",
+      });
+    }
+  });
 
 type RSVPFormData = z.infer<typeof rsvpSchema>;
 
