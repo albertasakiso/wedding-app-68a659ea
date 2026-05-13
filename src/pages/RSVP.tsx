@@ -23,16 +23,26 @@ import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 
-const rsvpSchema = z.object({
-  guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
-  phone: z.string().trim().min(6, "Phone number is required").max(20),
-  attending: z.boolean(),
-  has_plus_one: z.boolean(),
-  plus_one_name: z.string().trim().max(100).optional(),
-  message: z.string().trim().max(1000).optional(),
-  receive_photos: z.boolean(),
-  email: z.string().trim().email("Please enter a valid email").max(255).optional().or(z.literal("")),
-});
+const rsvpSchema = z
+  .object({
+    guest_name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+    phone: z.string().trim().min(6, "Phone number is required").max(20),
+    attending: z.boolean(),
+    has_plus_one: z.boolean(),
+    plus_one_name: z.string().trim().max(100).optional(),
+    message: z.string().trim().max(1000).optional(),
+    receive_photos: z.boolean(),
+    email: z.string().trim().email("Please enter a valid email").max(255).optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (data.receive_photos && !data.email) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["email"],
+        message: "Email is required to receive event photos",
+      });
+    }
+  });
 
 type RSVPFormData = z.infer<typeof rsvpSchema>;
 
@@ -61,7 +71,7 @@ const RSVP = () => {
 
   const attending = form.watch("attending");
   const hasPlussOne = form.watch("has_plus_one");
-  const receivePhotos = form.watch("receive_photos");
+  
 
   const onSubmit = async (data: RSVPFormData) => {
     setIsSubmitting(true);
@@ -286,6 +296,22 @@ const RSVP = () => {
                   )}
                 />
 
+                {/* Email (optional, used for confirmation + gift comms) */}
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-display text-lg">Email Address (Optional)</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="your@email.com" className="border-primary/20 focus:border-primary" {...field} />
+                      </FormControl>
+                      <p className="text-xs text-muted-foreground">We'll use this to send your RSVP confirmation and updates about gifts received.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 {/* Attending */}
                 <FormField
                   control={form.control}
@@ -381,22 +407,6 @@ const RSVP = () => {
                   )}
                 />
 
-                {/* Email (shown only when receive_photos is checked) */}
-                {receivePhotos && (
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-display text-lg">Email Address</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="your@email.com" className="border-primary/20 focus:border-primary" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
 
                 {/* Submit */}
                 <Button
