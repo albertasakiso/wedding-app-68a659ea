@@ -22,6 +22,21 @@ export default function GalleryTab({ photos, onRefresh }: GalleryTabProps) {
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption] = useState("");
   const [conversionInfo, setConversionInfo] = useState<{ original: string; converted: string } | null>(null);
+  const sel = useRowSelection();
+  const visibleIds = (photos || []).map((p: any) => p.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => sel.has(id));
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${sel.count} photos? This also removes them from storage.`)) return;
+    try {
+      await adminApi("bulk-delete-photo", { ids: sel.ids });
+      toast({ title: `${sel.count} photos deleted` });
+      sel.clear();
+      onRefresh();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
