@@ -20,6 +20,7 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newSub, setNewSub] = useState({ name: "", email: "", phone: "" });
+  const sel = useRowSelection();
   const { toast } = useToast();
 
   const filtered = subscribers.filter((s) =>
