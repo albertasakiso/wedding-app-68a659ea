@@ -153,6 +153,9 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="w-10">
+                <Checkbox checked={allSelected} onCheckedChange={() => sel.toggleAll(visibleIds)} />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
