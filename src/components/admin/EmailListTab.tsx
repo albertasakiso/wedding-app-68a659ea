@@ -148,6 +148,12 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
         </Card>
       )}
 
+      <BulkSelectionBar count={sel.count} onClear={sel.clear}>
+        <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="gap-1">
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkSelectionBar>
+
       {/* Table */}
       <div className="rounded-lg border border-primary/10 overflow-hidden">
         <Table>
