@@ -23,6 +23,7 @@ interface TimeLeft {
 
 const Hero = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>({
     couple_names: "Albert & Ruby",
     wedding_date: "2026-05-02T15:00:00Z",
@@ -37,6 +38,7 @@ const Hero = () => {
         .limit(1)
         .single();
       if (data) setSettings(data);
+      setSettingsLoaded(true);
     };
     fetchSettings();
   }, []);
