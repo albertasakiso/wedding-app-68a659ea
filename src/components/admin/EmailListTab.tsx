@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Download, Search, Plus, Mail, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Download, Search, Plus, Mail } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { useToast } from "@/hooks/use-toast";
+import { useRowSelection } from "@/hooks/useRowSelection";
+import BulkSelectionBar from "./BulkSelectionBar";
 
 interface EmailListTabProps {
   subscribers: any[];
