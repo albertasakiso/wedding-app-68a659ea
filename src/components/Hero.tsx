@@ -85,7 +85,7 @@ const Hero = () => {
       <div className="hidden md:block absolute top-8 left-8 right-8 bottom-8 border border-primary/20 rounded-lg pointer-events-none" />
       <div className="hidden md:block absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
 
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto pt-24 sm:pt-20 md:pt-0">
         <div className="flex justify-center mb-6 animate-fade-in">
           <Logo className="h-32 sm:h-40 md:h-56 lg:h-64 w-auto" />
         </div>
