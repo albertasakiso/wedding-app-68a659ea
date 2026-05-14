@@ -106,31 +106,48 @@ export default function GalleryTab({ photos, onRefresh }: GalleryTabProps) {
         </CardContent>
       </Card>
 
+      <BulkSelectionBar count={sel.count} onClear={sel.clear}>
+        <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="gap-1">
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkSelectionBar>
+
       {photos.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">No photos yet.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {photos.map((p) => (
-            <div key={p.id} className="group relative rounded-lg overflow-hidden border border-primary/10">
-              <img src={p.url} alt={p.caption || "Gallery"} className="w-full aspect-square object-cover" />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => handleDelete(p.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              {p.caption && (
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate">
-                  {p.caption}
+        <>
+          {visibleIds.length > 0 && (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Checkbox checked={allSelected} onCheckedChange={() => sel.toggleAll(visibleIds)} />
+              Select all
+            </label>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {photos.map((p) => (
+              <div key={p.id} className={`group relative rounded-lg overflow-hidden border ${sel.has(p.id) ? "border-primary ring-2 ring-primary" : "border-primary/10"}`}>
+                <img src={p.url} alt={p.caption || "Gallery"} className="w-full aspect-square object-cover" />
+                <div className="absolute top-2 left-2 z-10 bg-background/90 rounded p-1">
+                  <Checkbox checked={sel.has(p.id)} onCheckedChange={() => sel.toggle(p.id)} />
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDelete(p.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                {p.caption && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-2 truncate">
+                    {p.caption}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
