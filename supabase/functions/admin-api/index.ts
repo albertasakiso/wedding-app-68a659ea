@@ -67,6 +67,8 @@ const ROLE_PERMS: Record<string, Set<string>> = {
   gift_recorder: new Set([
     "get-dashboard", "list-gift-records", "insert-gift-record", "update-gift-record",
     "delete-gift-record", "list-audit-log", "list-contacts",
+    "insert-rsvp", "update-rsvp", "delete-rsvp", "clear-rsvp-message",
+    "bulk-delete-rsvp", "bulk-clear-rsvp-messages",
   ]),
   viewer: new Set([
     "get-dashboard", "list-gift-records", "list-audit-log", "list-contacts", "list-users",
