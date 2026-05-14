@@ -47,7 +47,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <header className="border-b border-primary/10 bg-card">
           <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
             <div>
-              <h1 className="font-display text-xl text-primary">Gift Records</h1>
+              <h1 className="font-display text-xl text-primary">Gift & RSVP Records</h1>
               <p className="text-xs text-muted-foreground">Signed in as {user?.name} · Gift Recorder</p>
             </div>
             <div className="flex items-center gap-2">
@@ -60,12 +60,14 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </header>
         <main className="max-w-7xl mx-auto px-4 py-6">
           <Tabs defaultValue="gifts">
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 flex-wrap h-auto gap-1">
               <TabsTrigger value="gifts" className="gap-2"><Gift className="h-4 w-4" /> Gifts</TabsTrigger>
+              <TabsTrigger value="rsvps" className="gap-2"><Users className="h-4 w-4" /> RSVPs</TabsTrigger>
               <TabsTrigger value="audit" className="gap-2"><History className="h-4 w-4" /> Audit Log</TabsTrigger>
               <TabsTrigger value="contacts" className="gap-2"><Contact className="h-4 w-4" /> Contacts</TabsTrigger>
             </TabsList>
             <TabsContent value="gifts"><GiftRecordsTab canEdit={canEditGifts} /></TabsContent>
+            <TabsContent value="rsvps"><GiftRecorderRSVPs /></TabsContent>
             <TabsContent value="audit"><GiftAuditLogTab /></TabsContent>
             <TabsContent value="contacts"><ContactsTab /></TabsContent>
           </Tabs>
