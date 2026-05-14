@@ -27,6 +27,20 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.email.toLowerCase().includes(search.toLowerCase())
   );
+  const visibleIds = filtered.map((s: any) => s.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => sel.has(id));
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Remove ${sel.count} subscribers from the email list?`)) return;
+    try {
+      await adminApi("bulk-delete-subscriber", { ids: sel.ids });
+      toast({ title: `${sel.count} subscribers removed` });
+      sel.clear();
+      onRefresh();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Remove ${name} from the email list?`)) return;
