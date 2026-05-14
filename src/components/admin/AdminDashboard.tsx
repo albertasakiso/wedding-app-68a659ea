@@ -90,7 +90,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { value: "events", label: "Events", icon: Calendar, render: () => <EventsTab events={events} onRefresh={handleRefresh} /> },
     { value: "venue", label: "Venue", icon: MapPin, render: () => <VenueTab venue={venue} onRefresh={handleRefresh} /> },
     { value: "gallery", label: "Gallery", icon: Image, render: () => <GalleryTab photos={photos} onRefresh={handleRefresh} /> },
-    { value: "messages", label: "Messages", icon: MessageSquare, render: () => <MessagesTab rsvps={rsvps} /> },
+    { value: "messages", label: "Messages", icon: MessageSquare, render: () => <MessagesTab rsvps={rsvps} onRefresh={handleRefresh} /> },
     { value: "gifts", label: "Gifts", icon: Gift, render: () => <GiftRecordsTab canEdit={canEditGifts} /> },
     { value: "audit", label: "Audit Log", icon: History, render: () => <GiftAuditLogTab /> },
     { value: "contacts", label: "Contacts", icon: Contact, render: () => <ContactsTab /> },
