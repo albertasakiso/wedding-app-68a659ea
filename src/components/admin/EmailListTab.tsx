@@ -167,13 +167,16 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No subscribers yet
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow key={s.id} data-state={sel.has(s.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox checked={sel.has(s.id)} onCheckedChange={() => sel.toggle(s.id)} />
+                  </TableCell>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell className="text-muted-foreground">{s.email}</TableCell>
                   <TableCell className="text-muted-foreground">{s.phone || "—"}</TableCell>
