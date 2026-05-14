@@ -202,6 +202,90 @@ Deno.serve(async (req) => {
         if (error) return json({ error: error.message }, 400);
         return json({ success: true });
       }
+      case "insert-rsvp": {
+        if (!params.guest_name?.trim()) return json({ error: "Guest name required" }, 400);
+        const { error } = await supabase.from("rsvps").insert({
+          guest_name: params.guest_name.trim(),
+          phone: params.phone?.trim() || null,
+          email: params.email?.trim() || null,
+          attending: params.attending !== false,
+          plus_one_name: params.plus_one_name?.trim() || null,
+          message: params.message?.trim() || null,
+        });
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+      case "update-rsvp": {
+        const { id, ...updates } = params;
+        const { error } = await supabase.from("rsvps").update(updates).eq("id", id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+      case "clear-rsvp-message": {
+        const { error } = await supabase.from("rsvps").update({ message: null }).eq("id", params.id);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true });
+      }
+      case "bulk-delete-rsvp": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("rsvps").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-clear-rsvp-messages": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("rsvps").update({ message: null }).in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-subscriber": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("email_list").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-event": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("events").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-gift": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("gift_options").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-gift-wall": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { error } = await supabase.from("gift_wall").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-photo": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        const { data: rows } = await supabase.from("gallery_photos").select("id, url").in("id", params.ids);
+        const paths: string[] = [];
+        for (const p of rows || []) {
+          const parts = (p.url || "").split("/gallery/");
+          if (parts.length > 1) paths.push(parts[1]);
+        }
+        if (paths.length) await supabase.storage.from("gallery").remove(paths);
+        const { error } = await supabase.from("gallery_photos").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        return json({ success: true, count: params.ids.length });
+      }
+      case "bulk-delete-gift-record": {
+        if (!Array.isArray(params.ids) || !params.ids.length) return json({ error: "ids[] required" }, 400);
+        if (!params.reason || !String(params.reason).trim()) return json({ error: "Reason required" }, 400);
+        const { data: before } = await supabase.from("gift_records").select("*").in("id", params.ids);
+        const { error } = await supabase.from("gift_records").delete().in("id", params.ids);
+        if (error) return json({ error: error.message }, 400);
+        for (const row of before || []) {
+          await writeGiftAudit(row.id, "delete", params.reason, row, null);
+        }
+        return json({ success: true, count: params.ids.length });
+      }
       case "insert-event": {
         const { error } = await supabase.from("events").insert({
           title: params.title, description: params.description, event_time: params.event_time,
