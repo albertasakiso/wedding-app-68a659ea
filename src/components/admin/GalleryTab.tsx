@@ -2,11 +2,14 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trash2, Upload, CheckCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, CheckCircle } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { convertToWebP, formatFileSize } from "@/lib/image-utils";
+import { useRowSelection } from "@/hooks/useRowSelection";
+import BulkSelectionBar from "./BulkSelectionBar";
 
 interface GalleryTabProps {
   photos: any[];
