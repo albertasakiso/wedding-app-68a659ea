@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Download, Search, Plus, Mail, Users } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2, Download, Search, Plus, Mail } from "lucide-react";
 import { adminApi } from "@/lib/admin-api";
 import { useToast } from "@/hooks/use-toast";
+import { useRowSelection } from "@/hooks/useRowSelection";
+import BulkSelectionBar from "./BulkSelectionBar";
 
 interface EmailListTabProps {
   subscribers: any[];
@@ -17,12 +20,27 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newSub, setNewSub] = useState({ name: "", email: "", phone: "" });
+  const sel = useRowSelection();
   const { toast } = useToast();
 
   const filtered = subscribers.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.email.toLowerCase().includes(search.toLowerCase())
   );
+  const visibleIds = filtered.map((s: any) => s.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => sel.has(id));
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Remove ${sel.count} subscribers from the email list?`)) return;
+    try {
+      await adminApi("bulk-delete-subscriber", { ids: sel.ids });
+      toast({ title: `${sel.count} subscribers removed` });
+      sel.clear();
+      onRefresh();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Remove ${name} from the email list?`)) return;
@@ -130,11 +148,20 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
         </Card>
       )}
 
+      <BulkSelectionBar count={sel.count} onClear={sel.clear}>
+        <Button size="sm" variant="destructive" onClick={handleBulkDelete} className="gap-1">
+          <Trash2 className="h-3.5 w-3.5" /> Delete
+        </Button>
+      </BulkSelectionBar>
+
       {/* Table */}
       <div className="rounded-lg border border-primary/10 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
+              <TableHead className="w-10">
+                <Checkbox checked={allSelected} onCheckedChange={() => sel.toggleAll(visibleIds)} />
+              </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
@@ -146,13 +173,16 @@ export default function EmailListTab({ subscribers, onRefresh }: EmailListTabPro
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   No subscribers yet
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((s) => (
-                <TableRow key={s.id}>
+                <TableRow key={s.id} data-state={sel.has(s.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox checked={sel.has(s.id)} onCheckedChange={() => sel.toggle(s.id)} />
+                  </TableCell>
                   <TableCell className="font-medium">{s.name}</TableCell>
                   <TableCell className="text-muted-foreground">{s.email}</TableCell>
                   <TableCell className="text-muted-foreground">{s.phone || "—"}</TableCell>

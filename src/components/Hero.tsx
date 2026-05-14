@@ -23,6 +23,7 @@ interface TimeLeft {
 
 const Hero = () => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0, isPast: false });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>({
     couple_names: "Albert & Ruby",
     wedding_date: "2026-05-02T15:00:00Z",
@@ -37,6 +38,7 @@ const Hero = () => {
         .limit(1)
         .single();
       if (data) setSettings(data);
+      setSettingsLoaded(true);
     };
     fetchSettings();
   }, []);
@@ -83,7 +85,7 @@ const Hero = () => {
       <div className="hidden md:block absolute top-8 left-8 right-8 bottom-8 border border-primary/20 rounded-lg pointer-events-none" />
       <div className="hidden md:block absolute top-12 left-12 right-12 bottom-12 border border-primary/10 rounded-lg pointer-events-none" />
 
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto pt-24 sm:pt-20 md:pt-0">
         <div className="flex justify-center mb-6 animate-fade-in">
           <Logo className="h-32 sm:h-40 md:h-56 lg:h-64 w-auto" />
         </div>
@@ -107,8 +109,17 @@ const Hero = () => {
           {dateStr}
         </p>
 
-        {/* Countdown OR post-wedding celebration */}
-        {timeLeft.isPast ? (
+        {/* Countdown OR post-wedding celebration — only render after settings load to avoid flash */}
+        {!settingsLoaded ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4 md:gap-8 max-w-xl mx-auto mb-12">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="text-center">
+                <div className="bg-card/50 backdrop-blur-sm border border-primary/10 rounded-lg p-3 sm:p-4 md:p-6 shadow-soft animate-pulse h-[60px] sm:h-[72px] md:h-[96px]" />
+                <div className="h-3 mt-2 mx-auto w-12 bg-muted/40 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : timeLeft.isPast ? (
           <div className="max-w-xl mx-auto mb-12 animate-slide-up" style={{ animationDelay: "0.6s" }}>
             <div className="bg-card/80 backdrop-blur-sm border border-primary/30 rounded-2xl p-8 md:p-10 shadow-elegant text-center">
               <Heart className="w-12 h-12 text-primary fill-primary/30 mx-auto mb-4 animate-pulse" />

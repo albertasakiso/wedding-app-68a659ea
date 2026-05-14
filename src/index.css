@@ -196,3 +196,11 @@
     }
   }
 }
+
+/* Smooth-scroll anchor offset so fixed nav doesn't cover headings */
+html {
+  scroll-padding-top: 5rem;
+}
+section[id] {
+  scroll-margin-top: 5rem;
+}

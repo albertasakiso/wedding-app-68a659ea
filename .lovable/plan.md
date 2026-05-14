@@ -1,23 +1,57 @@
-## Goal
-Move email collection up the RSVP form so every guest can optionally provide an email for confirmation/decline auto-replies and future gift acknowledgments. Keep "I'd like to receive photos" as a separate opt-in, but require email only when that box is ticked.
+## Round 9 Plan — Admin enhancements + mobile/UX fixes
 
-## Changes (single file: `src/pages/RSVP.tsx`)
+### 1. Gift recorder can add manual RSVPs
 
-1. **Add an Email field directly after the Phone field** (always visible, optional):
-   - Label: "Email Address (Optional)"
-   - Helper text: "We'll use this to send your RSVP confirmation and updates about gifts received."
-   - Same zod rule as today (valid email or empty).
+- **`supabase/functions/admin-api/index.ts`**:
+  - Add `insert-rsvp` and `update-rsvp` actions (insert: `guest_name`, `phone`, `email?`, `attending`, `plus_one_name?`, `message?`).
+  - Add `clear-rsvp-message` action (sets `message = null` only).
+  - Extend `ROLE_PERMS.gift_recorder` to include: `insert-rsvp`, `update-rsvp`, `delete-rsvp`, `clear-rsvp-message`, plus `bulk-delete-rsvp`, `bulk-clear-rsvp-messages`.
+- **`AdminDashboard.tsx`**: In the gift-recorder stripped view, add an "RSVPs" tab alongside Gifts/Audit/Contacts.
+- **New `RSVPFormDialog`** (small dialog) used by RSVPsTab for add/edit. Reused by both gift-recorder view and full admin view.
 
-2. **Remove the duplicate Email field** that currently renders only when `receive_photos` is checked.
+### 2. Separate RSVP deletion from message deletion
 
-3. **Conditional requirement when "receive photos" is ticked**:
-   - Update the zod schema with a `superRefine`: if `receive_photos === true` and `email` is empty, attach an error to the `email` field ("Email is required to receive event photos").
-   - On submit, if validation fails for that reason, the form already focuses/highlights the email input (react-hook-form behavior) — guest is effectively prompted to enter it.
+- **`RSVPsTab.tsx`**:
+  - Add a second per-row action: a "Clear message" button (eraser icon) that only nulls the message after confirm (calls `clear-rsvp-message`).
+  - Keep the existing trash button for full RSVP delete (red, with stronger confirm).
+- **`MessagesTab.tsx`**: Add a "Remove message" button on each card that calls `clear-rsvp-message` — moderators can scrub inappropriate text without losing the RSVP/attendance count.
 
-4. **Submission logic unchanged otherwise**:
-   - `data.email || null` already saved on the rsvp row.
-   - `email_list` upsert still gated on `receive_photos && data.email`.
-   - The existing `send-rsvp-confirmation` edge function call already fires whenever `guest_email` is present, so attending and not-attending auto-replies will now reach any guest who provided an email — no edge function changes needed.
+### 2b. Bulk schema requirement (single migration)
 
-## Out of scope
-No DB migration, no edge function edits, no other pages.
+Add bulk delete RPCs aren't needed — edge function will accept arrays. Just add new actions in `admin-api`:
+  - `bulk-delete-rsvp` (ids[]), `bulk-clear-rsvp-messages` (ids[])
+  - `bulk-delete-photo` (ids[]) — also removes storage objects in a loop.
+  - `bulk-delete-subscriber`, `bulk-delete-event`, `bulk-delete-gift`, `bulk-delete-gift-wall`, `bulk-delete-gift-record` (with audit entries).
+
+No DB schema change required; bulk = loop on service-role client.
+
+### 3. Bulk actions in all admin tables
+
+- New shared component **`src/components/admin/BulkSelectionBar.tsx`**: shows "N selected · [Delete] [Clear messages?] · Clear selection" sticky above each table.
+- New shared hook **`src/hooks/useRowSelection.ts`**: `selected`, `toggle(id)`, `toggleAll(ids)`, `clear()`, `allSelected`.
+- Update each admin tab to add a leading checkbox column + header checkbox + bulk bar:
+  - `RSVPsTab` (delete + clear messages)
+  - `MessagesTab` (clear messages bulk)
+  - `EmailListTab` (delete subscribers)
+  - `GalleryTab` (delete photos)
+  - `EventsTab` (delete events)
+  - `GiftsTab` (delete gift options)
+  - `GiftRecordsTab` (delete records — gated to admins; gift_recorder keeps single delete with reason)
+- Tables that need a reason (gift_records) prompt once for the batch via existing `ReasonDialog`.
+
+### 4. Mobile / hero fixes
+
+- **Hero "We did it" flash**: `Hero.tsx` currently mounts with default `wedding_date = 2026-05-02` (already past). On first render with `timeLeft.isPast = false`, then settings load → real future date arrives, but in the brief gap between mount and settings fetch the countdown calc may flip to past. Fix: add a `settingsLoaded` state; render the countdown card only after `settingsLoaded === true` (show a skeleton placeholder before then). Also recompute `weddingDate` from latest settings inside the effect.
+- **Mobile content behind fixed header**: Add `pt-20 md:pt-24` to top of `Gallery`, `Gifts`, `RSVP`, `MyDay` page wrappers (Hero's own min-h-screen already clears it). Verify `Navigation` height — currently ~64–72px on mobile, so 80px (`pt-20`) is safe.
+
+### Technical notes
+
+- All bulk actions invoke the edge function once per batch (server loops). No client-side multi-roundtrip.
+- New audit entries for bulk gift-record deletes write one row per record, sharing the same reason.
+- No new secrets, no DB migrations.
+
+### Out of scope
+
+- No changes to public site beyond the 4 page padding fix and Hero loader.
+- No edge-function changes to `email-notifications`.
+- No new tables.
