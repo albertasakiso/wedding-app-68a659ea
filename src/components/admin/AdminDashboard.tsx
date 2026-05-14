@@ -19,6 +19,7 @@ import ContactsTab from "./ContactsTab";
 import QRCodeTab from "./QRCodeTab";
 import PaymentSettingsTab from "./PaymentSettingsTab";
 import EmailSettingsTab from "./EmailSettingsTab";
+import GiftRecorderRSVPs from "./GiftRecorderRSVPs";
 import type { DashboardData } from "./types";
 
 interface AdminDashboardProps {
