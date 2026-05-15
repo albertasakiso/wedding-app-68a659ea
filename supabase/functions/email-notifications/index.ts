@@ -130,8 +130,17 @@ Deno.serve(async (req) => {
               ${venueName ? `<p style="color:#8B7355;font-size:15px;margin:10px 0 0;">${venueName}${venueAddress ? `<br><span style="color:#a89680;font-size:13px;">${venueAddress}</span>` : ""}</p>` : ""}
               ${params.plus_one_name ? `<p style="color:#a89680;font-size:13px;margin:14px 0 0;">Plus one: <strong>${params.plus_one_name}</strong></p>` : ""}
             </div>
+            <div style="background:#faf8f5;border-radius:10px;padding:24px;margin:28px 0;">
+              <p style="color:#8B7355;font-size:15px;line-height:1.7;margin:0 0 10px;text-align:center;font-weight:bold;">Want to bless us with a gift?</p>
+              <p style="color:#555;font-size:14px;line-height:1.7;margin:0;text-align:center;">
+                Your presence is the greatest gift, but if you'd like to contribute towards our new beginning, you can send a gift via MTN MoMo, Telecel Cash or GCB transfer — full details are on our gift page.
+              </p>
+              <div style="text-align:center;margin-top:18px;">
+                <a href="${giftsUrl}" style="display:inline-block;background:#8B7355;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;letter-spacing:1px;">Support the Couple</a>
+              </div>
+            </div>
             <div style="text-align:center;margin:30px 0;">
-              <a href="${homeUrl}" style="display:inline-block;background:#8B7355;color:#fff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;letter-spacing:1px;">Visit Our Wedding Site</a>
+              <a href="${homeUrl}" style="display:inline-block;border:1px solid #8B7355;color:#8B7355;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:14px;letter-spacing:1px;">Visit Our Wedding Site</a>
             </div>
             <p style="color:#999;font-size:13px;text-align:center;font-style:italic;margin-top:24px;">With love,<br>Albert &amp; Ruby</p>
           `);
