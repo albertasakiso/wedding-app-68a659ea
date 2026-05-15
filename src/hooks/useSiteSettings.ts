@@ -11,7 +11,7 @@ export interface SiteSettings {
 
 const DEFAULTS: SiteSettings = {
   couple_names: "Albert & Ruby",
-  wedding_date: "2026-05-02T15:00:00Z",
+  wedding_date: "2026-06-13T11:00:00Z",
   tagline: "Together with their families",
   hero_image_url: null,
 };

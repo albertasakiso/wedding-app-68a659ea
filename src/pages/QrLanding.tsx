@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Heart, Calendar, CheckCircle2 } from "lucide-react";
+import { Heart, Calendar, CheckCircle2, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ export default function QrLanding() {
 
   const choices = [
     { to: "/rsvp", icon: Heart, title: "RSVP", desc: "Let us know if you can join" },
+    { to: "/gifts", icon: Gift, title: "Support the Couple", desc: "Send a gift or blessing" },
     { to: "/my-day", icon: Calendar, title: "Programme", desc: "View the full wedding schedule" },
     { to: "/check-in", icon: CheckCircle2, title: "Check In", desc: "Mark your arrival at the venue" },
   ];

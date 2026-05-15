@@ -115,8 +115,14 @@ export default function MessagesWall() {
           </p>
         </div>
 
-        <div className="flex justify-center gap-6 max-h-[500px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
-          <MessagesColumn messages={col1} duration={25} className="hidden md:block" />
+        {/* Mobile: single column with all messages so the section never appears empty */}
+        <div className="md:hidden flex justify-center max-h-[500px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
+          <MessagesColumn messages={messages} duration={20} />
+        </div>
+
+        {/* Tablet/Desktop: 2-3 column marquee */}
+        <div className="hidden md:flex justify-center gap-6 max-h-[500px] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)]">
+          <MessagesColumn messages={col1} duration={25} />
           <MessagesColumn messages={col2} duration={18} />
           {col3.length > 0 && (
             <MessagesColumn messages={col3} duration={22} className="hidden lg:block" />
