@@ -3,7 +3,7 @@
  * Use these everywhere instead of hardcoding "May 2nd, 2026" etc.
  */
 
-const DEFAULT_WEDDING_ISO = "2026-05-02T15:00:00Z";
+const DEFAULT_WEDDING_ISO = "2026-06-13T11:00:00Z";
 
 export function parseWeddingDate(input?: string | null): Date {
   if (!input) return new Date(DEFAULT_WEDDING_ISO);

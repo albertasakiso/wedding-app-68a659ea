@@ -26,7 +26,7 @@ const Hero = () => {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>({
     couple_names: "Albert & Ruby",
-    wedding_date: "2026-05-02T15:00:00Z",
+    wedding_date: "2026-06-13T11:00:00Z",
     tagline: "Together with their families",
   });
 
@@ -105,9 +105,13 @@ const Hero = () => {
         <p className="font-display text-2xl md:text-3xl text-foreground/80 mb-2 animate-fade-in" style={{ animationDelay: "0.4s" }}>
           Request the pleasure of your company
         </p>
-        <p className="font-display text-3xl md:text-4xl text-primary mb-12 animate-fade-in" style={{ animationDelay: "0.5s" }}>
-          {dateStr}
-        </p>
+        {settingsLoaded ? (
+          <p className="font-display text-3xl md:text-4xl text-primary mb-12 animate-fade-in" style={{ animationDelay: "0.5s" }}>
+            {dateStr}
+          </p>
+        ) : (
+          <div className="mx-auto h-9 md:h-11 w-64 md:w-80 mb-12 rounded bg-muted/40 animate-pulse" />
+        )}
 
         {/* Countdown OR post-wedding celebration — only render after settings load to avoid flash */}
         {!settingsLoaded ? (

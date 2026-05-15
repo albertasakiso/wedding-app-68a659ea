@@ -1,57 +1,40 @@
-## Round 9 Plan — Admin enhancements + mobile/UX fixes
+# Round 10 — 4 small UX fixes
 
-### 1. Gift recorder can add manual RSVPs
+## 1. Well Wishes hidden on mobile
+`MessagesWall.tsx` splits messages into 3 columns by index `% 3`. Column 2 (the only one visible on mobile) gets every 3rd message starting at index 1 — when there are 1–2 total messages, the mobile column is empty so the whole section vanishes.
 
-- **`supabase/functions/admin-api/index.ts`**:
-  - Add `insert-rsvp` and `update-rsvp` actions (insert: `guest_name`, `phone`, `email?`, `attending`, `plus_one_name?`, `message?`).
-  - Add `clear-rsvp-message` action (sets `message = null` only).
-  - Extend `ROLE_PERMS.gift_recorder` to include: `insert-rsvp`, `update-rsvp`, `delete-rsvp`, `clear-rsvp-message`, plus `bulk-delete-rsvp`, `bulk-clear-rsvp-messages`.
-- **`AdminDashboard.tsx`**: In the gift-recorder stripped view, add an "RSVPs" tab alongside Gifts/Audit/Contacts.
-- **New `RSVPFormDialog`** (small dialog) used by RSVPsTab for add/edit. Reused by both gift-recorder view and full admin view.
+**Fix:** on mobile, feed the middle column the **full list** of messages (no slicing), and keep the 2/3-column split only at `md`/`lg`. Render two `<MessagesColumn>` instances — one mobile-only with all messages, one desktop-only with the existing 3-column layout — so the section always shows on phones.
 
-### 2. Separate RSVP deletion from message deletion
+## 2. "Support the Couple" on the QR landing
+`src/pages/QrLanding.tsx` currently shows three choices: RSVP, Programme, Check In. Add a fourth card:
+- **Title:** "Support the Couple"
+- **Subtitle:** "Send a gift or blessing"
+- **Icon:** `Gift` from lucide-react
+- **Link:** `/gifts`
+Place it after RSVP so guests see it early.
 
-- **`RSVPsTab.tsx`**:
-  - Add a second per-row action: a "Clear message" button (eraser icon) that only nulls the message after confirm (calls `clear-rsvp-message`).
-  - Keep the existing trash button for full RSVP delete (red, with stronger confirm).
-- **`MessagesTab.tsx`**: Add a "Remove message" button on each card that calls `clear-rsvp-message` — moderators can scrub inappropriate text without losing the RSVP/attendance count.
+## 3. Gift CTA inside the RSVP confirmation email
+In `supabase/functions/email-notifications/index.ts`, the **attending** branch of `send-rsvp-confirmation` currently only links to the homepage. Add a soft "If you'd like to bless us with a gift" block (same warm tone as the not-attending variant) with a button linking to `${siteUrl}/gifts`. Keep the existing "Visit Our Wedding Site" CTA below it. Mention MTN MoMo / Telecel Cash / GCB so guests know payment options exist.
 
-### 2b. Bulk schema requirement (single migration)
+The not-attending branch already has this — no change there.
 
-Add bulk delete RPCs aren't needed — edge function will accept arrays. Just add new actions in `admin-api`:
-  - `bulk-delete-rsvp` (ids[]), `bulk-clear-rsvp-messages` (ids[])
-  - `bulk-delete-photo` (ids[]) — also removes storage objects in a loop.
-  - `bulk-delete-subscriber`, `bulk-delete-event`, `bulk-delete-gift`, `bulk-delete-gift-wall`, `bulk-delete-gift-record` (with audit entries).
+## 4. Old date flash on first load
+DB already holds `2026-06-13 11:00:00+00`, but three files hardcode `2026-05-02T15:00:00Z` as the default that renders before the fetch resolves:
+- `src/components/Hero.tsx` (line 29) — Hero shows `dateStr` from this default until settings load.
+- `src/hooks/useSiteSettings.ts` (line 15) — `DEFAULTS.wedding_date`.
+- `src/lib/date-utils.ts` (line 6) — `DEFAULT_WEDDING_ISO`.
 
-No DB schema change required; bulk = loop on service-role client.
+**Fix:**
+- Update all three constants to `2026-06-13T11:00:00Z` so any pre-fetch render matches reality.
+- In `Hero.tsx`, also gate the `dateStr` line behind `settingsLoaded` (render a thin shimmer placeholder instead) so a stale cached value can never flash either.
 
-### 3. Bulk actions in all admin tables
+## Files touched
+- `src/components/MessagesWall.tsx`
+- `src/pages/QrLanding.tsx`
+- `supabase/functions/email-notifications/index.ts`
+- `src/components/Hero.tsx`
+- `src/hooks/useSiteSettings.ts`
+- `src/lib/date-utils.ts`
 
-- New shared component **`src/components/admin/BulkSelectionBar.tsx`**: shows "N selected · [Delete] [Clear messages?] · Clear selection" sticky above each table.
-- New shared hook **`src/hooks/useRowSelection.ts`**: `selected`, `toggle(id)`, `toggleAll(ids)`, `clear()`, `allSelected`.
-- Update each admin tab to add a leading checkbox column + header checkbox + bulk bar:
-  - `RSVPsTab` (delete + clear messages)
-  - `MessagesTab` (clear messages bulk)
-  - `EmailListTab` (delete subscribers)
-  - `GalleryTab` (delete photos)
-  - `EventsTab` (delete events)
-  - `GiftsTab` (delete gift options)
-  - `GiftRecordsTab` (delete records — gated to admins; gift_recorder keeps single delete with reason)
-- Tables that need a reason (gift_records) prompt once for the batch via existing `ReasonDialog`.
-
-### 4. Mobile / hero fixes
-
-- **Hero "We did it" flash**: `Hero.tsx` currently mounts with default `wedding_date = 2026-05-02` (already past). On first render with `timeLeft.isPast = false`, then settings load → real future date arrives, but in the brief gap between mount and settings fetch the countdown calc may flip to past. Fix: add a `settingsLoaded` state; render the countdown card only after `settingsLoaded === true` (show a skeleton placeholder before then). Also recompute `weddingDate` from latest settings inside the effect.
-- **Mobile content behind fixed header**: Add `pt-20 md:pt-24` to top of `Gallery`, `Gifts`, `RSVP`, `MyDay` page wrappers (Hero's own min-h-screen already clears it). Verify `Navigation` height — currently ~64–72px on mobile, so 80px (`pt-20`) is safe.
-
-### Technical notes
-
-- All bulk actions invoke the edge function once per batch (server loops). No client-side multi-roundtrip.
-- New audit entries for bulk gift-record deletes write one row per record, sharing the same reason.
-- No new secrets, no DB migrations.
-
-### Out of scope
-
-- No changes to public site beyond the 4 page padding fix and Hero loader.
-- No edge-function changes to `email-notifications`.
-- No new tables.
+## Out of scope
+No DB migrations, no new tables, no schema changes, no admin-side changes.
