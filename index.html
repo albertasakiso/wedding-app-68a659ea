@@ -22,9 +22,29 @@
     <meta name="theme-color" content="#8B7355" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="A & R Wedding" />
+    <link rel="preload" as="image" href="/wedding-logo.png" fetchpriority="high" />
+    <style>
+      #app-splash {
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 1.25rem;
+        background: linear-gradient(180deg, #fbf8f3 0%, #f5efe4 100%);
+        z-index: 9999; transition: opacity .35s ease;
+      }
+      #app-splash.hide { opacity: 0; pointer-events: none; }
+      #app-splash img { width: 96px; height: 96px; object-fit: contain; animation: splash-pulse 1.6s ease-in-out infinite; }
+      #app-splash .ring { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(139,115,85,.18); border-top-color: #8B7355; animation: splash-spin .9s linear infinite; }
+      #app-splash p { font-family: Georgia, 'Times New Roman', serif; color: #8B7355; letter-spacing: .25em; text-transform: uppercase; font-size: 12px; margin: 0; }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+      @keyframes splash-pulse { 0%,100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.05); opacity: 1; } }
+    </style>
   </head>
 
   <body>
+    <div id="app-splash" aria-hidden="true">
+      <img src="/wedding-logo.png" alt="" />
+      <div class="ring"></div>
+      <p>Albert &amp; Ruby</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
