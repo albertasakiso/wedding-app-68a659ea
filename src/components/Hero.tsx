@@ -102,9 +102,9 @@ const Hero = () => {
           <div className="h-px w-16 md:w-24 bg-gradient-to-l from-transparent to-primary/50" />
         </div>
 
-        <div className="font-display text-xl md:text-2xl text-foreground mb-6 animate-fade-in space-y-1" style={{ animationDelay: "0.35s" }}>
+        <div className="font-display text-2xl md:text-4xl text-foreground mb-6 animate-fade-in space-y-1" style={{ animationDelay: "0.35s" }}>
           <p><em className="italic font-semibold text-primary">Albert</em> Asakiso Apiligu</p>
-          <p className="text-primary text-lg md:text-xl">&amp;</p>
+          <p className="text-primary text-xl md:text-2xl">&amp;</p>
           <p><em className="italic font-semibold text-primary">Ruby</em> Teye-Doryumu</p>
         </div>
 
