@@ -1,26 +1,17 @@
-## Goal
-Display the couple's full names in the Hero, between the "Together with their families" tagline and the "Request the pleasure of your company" line, with the first names *Albert* and *Ruby* italicized.
-
-## Layout
-```
-Together with their families
-       ─── ♥ ───
-  *Albert* Asakiso Apiligu
-            &
-  *Ruby* Teye-Doryumu
-Request the pleasure of your company
-            13th June, 2026
-```
-
 ## Changes
 
-### `src/components/Hero.tsx`
-- After the divider (heart + lines) block and before the "Request the pleasure of your company" paragraph, insert a new block rendering the full names.
-- Derive `firstNames` from `settings.couple_names.split("&")` (already done) and pair with hardcoded surnames: `Asakiso Apiligu` for Albert, `Teye-Doryumu` for Ruby. Render with the first name wrapped in `<em>` using the display serif font, the rest in the body weight.
-- Use existing design tokens: `font-display`, `text-foreground`, responsive sizes (e.g. `text-xl md:text-2xl`), and `animate-fade-in` with a delay between the divider (0.3s) and the next line (0.4s), e.g. `0.35s`.
-- Center-aligned, stacked, with an "&" separator styled in `text-primary`.
-- Also gate behind `settingsLoaded` only if needed — names are hardcoded surnames + parsed first names from defaults, so safe to render immediately.
+### 1. `src/components/Hero.tsx` — bump couple names font size
+- Change the names block wrapper from `font-display text-xl md:text-2xl` to `font-display text-2xl md:text-4xl` for stronger presence.
+- Bump the "&" line from `text-lg md:text-xl` to `text-xl md:text-2xl`.
+- Keep all other styling (italic first names in primary, fade-in delay 0.35s, spacing) unchanged.
 
-## Out of scope
-- No DB/schema changes (surnames are hardcoded in the component since `site_settings.couple_names` only stores short names).
-- No changes to Footer, Navigation, or other pages.
+### 2. `src/pages/QrLanding.tsx` — add Venue Location entry
+- Insert a new choice between **Programme** and **Check In**:
+  - `title`: "Venue Location"
+  - `desc`: "Open the venue map on your device"
+  - `icon`: `MapPin` (lucide-react)
+- Instead of a `<Link>`, render it as an `<a>` with `href` built from `buildMapsLinkUrl()` (`src/lib/maps-utils.ts`) and `target="_blank"`, so it opens the user's native maps app.
+- Fetch venue info (name/address/lat/lng/map_url) alongside the existing couple-names fetch, in parallel, with a sensible fallback if it isn't loaded yet (button still renders, just disabled or falls back to address-less query).
+- Refactor the `choices` rendering to support both internal `Link` items and external `<a>` items (e.g. add an optional `external: true` + `href` field on the choice object).
+
+No other files, no schema, no styling-system changes.
