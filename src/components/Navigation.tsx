@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/co
 import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/components/Logo";
+import { useIsWeddingDayOrPast } from "@/hooks/useSiteSettings";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -31,15 +32,17 @@ const Navigation = () => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const rsvpClosed = useIsWeddingDayOrPast();
   type NavItem = { label: string; href?: string; action?: () => void; highlight?: boolean };
   const navItems: NavItem[] = [
     { label: "Home", action: () => scrollToSection("hero") },
     { label: "Schedule", action: () => scrollToSection("schedule") },
+    { label: "Programme", href: "/programme" },
     { label: "Venue", action: () => scrollToSection("venue") },
     { label: "Gallery", href: "/gallery" },
     { label: "Gifts", href: "/gifts" },
     { label: "My Day", href: "/my-day" },
-    { label: "RSVP", href: "/rsvp", highlight: true },
+    ...(rsvpClosed ? [] : [{ label: "RSVP", href: "/rsvp", highlight: true } as NavItem]),
   ];
 
   const isActive = (href?: string) => href && location.pathname === href;

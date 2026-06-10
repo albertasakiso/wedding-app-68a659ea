@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ShareInvite from "@/components/ShareInvite";
 import Logo from "@/components/Logo";
 import { formatWeddingDate } from "@/lib/date-utils";
+import { isWeddingDayOrPast } from "@/hooks/useSiteSettings";
 
 interface SiteSettings {
   couple_names: string;
@@ -164,9 +165,15 @@ const Hero = () => {
         )}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in" style={{ animationDelay: "0.8s" }}>
-          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-display shadow-elegant">
-            <Link to="/rsvp">RSVP Now</Link>
-          </Button>
+          {!isWeddingDayOrPast(settings.wedding_date) ? (
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-display shadow-elegant">
+              <Link to="/rsvp">RSVP Now</Link>
+            </Button>
+          ) : (
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-lg font-display shadow-elegant">
+              <Link to="/programme">View Programme</Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="lg"

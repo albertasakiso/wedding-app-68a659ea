@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell, History, Shield, Contact, QrCode, ExternalLink } from "lucide-react";
+import { LogOut, LayoutDashboard, Users, Calendar, MapPin, Image, MessageSquare, Settings, Mail, Gift, CreditCard, Bell, History, Shield, Contact, QrCode, ExternalLink, BookOpen } from "lucide-react";
 import { adminApi, clearAdminToken, getAdminUser } from "@/lib/admin-api";
 import OverviewTab from "./OverviewTab";
 import RSVPsTab from "./RSVPsTab";
@@ -20,6 +20,7 @@ import QRCodeTab from "./QRCodeTab";
 import PaymentSettingsTab from "./PaymentSettingsTab";
 import EmailSettingsTab from "./EmailSettingsTab";
 import GiftRecorderRSVPs from "./GiftRecorderRSVPs";
+import ProgrammeTab from "./ProgrammeTab";
 import type { DashboardData } from "./types";
 
 interface AdminDashboardProps {
@@ -88,6 +89,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
     { value: "overview", label: "Overview", icon: LayoutDashboard, render: () => <OverviewTab rsvps={rsvps} /> },
     { value: "rsvps", label: "RSVPs", icon: Users, render: () => <RSVPsTab rsvps={rsvps} onRefresh={handleRefresh} /> },
     { value: "events", label: "Events", icon: Calendar, render: () => <EventsTab events={events} onRefresh={handleRefresh} /> },
+    { value: "programme", label: "Programme", icon: BookOpen, render: () => <ProgrammeTab /> },
     { value: "venue", label: "Venue", icon: MapPin, render: () => <VenueTab venue={venue} onRefresh={handleRefresh} /> },
     { value: "gallery", label: "Gallery", icon: Image, render: () => <GalleryTab photos={photos} onRefresh={handleRefresh} /> },
     { value: "messages", label: "Messages", icon: MessageSquare, render: () => <MessagesTab rsvps={rsvps} onRefresh={handleRefresh} /> },
