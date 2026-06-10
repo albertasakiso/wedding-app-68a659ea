@@ -451,6 +451,210 @@ export type Database = {
         }
         Relationships: []
       }
+      programme_credits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          phone: string | null
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          phone?: string | null
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          phone?: string | null
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_functionaries: {
+        Row: {
+          affiliation: string | null
+          created_at: string
+          group_key: string
+          id: string
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          affiliation?: string | null
+          created_at?: string
+          group_key: string
+          id?: string
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          affiliation?: string | null
+          created_at?: string
+          group_key?: string
+          id?: string
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_hymns: {
+        Row: {
+          author: string | null
+          created_at: string
+          id: string
+          lyrics: string | null
+          order_index: number
+          reference: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          order_index?: number
+          reference?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          id?: string
+          lyrics?: string | null
+          order_index?: number
+          reference?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_order_of_service: {
+        Row: {
+          created_at: string
+          id: string
+          item: string
+          led_by: string | null
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item: string
+          led_by?: string | null
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item?: string
+          led_by?: string | null
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_photography: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          label: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          label: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          label?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_sections: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      programme_thank_you: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          updated_at: string
+          verse_reference: string | null
+          verse_text: string | null
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          verse_reference?: string | null
+          verse_text?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          verse_reference?: string | null
+          verse_text?: string | null
+        }
+        Relationships: []
+      }
       rsvps: {
         Row: {
           attending: boolean | null
