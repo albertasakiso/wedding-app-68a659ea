@@ -645,6 +645,62 @@ Deno.serve(async (req) => {
         return json({ checkins: data || [] });
       }
 
+      // ============== PROGRAMME CMS =============================
+      case "list-programme":
+      case "insert-programme":
+      case "update-programme":
+      case "delete-programme":
+      case "upsert-programme-thank-you": {
+        const ALLOWED: Record<string, true> = {
+          programme_sections: true,
+          programme_functionaries: true,
+          programme_order_of_service: true,
+          programme_hymns: true,
+          programme_photography: true,
+          programme_credits: true,
+          programme_thank_you: true,
+        };
+        if (action === "upsert-programme-thank-you") {
+          const { id, body, verse_reference, verse_text } = params;
+          const payload = { body: body ?? "", verse_reference: verse_reference ?? null, verse_text: verse_text ?? null };
+          if (id) {
+            const { error } = await supabase.from("programme_thank_you").update(payload).eq("id", id);
+            if (error) return json({ error: error.message }, 400);
+          } else {
+            const { error } = await supabase.from("programme_thank_you").insert(payload);
+            if (error) return json({ error: error.message }, 400);
+          }
+          return json({ success: true });
+        }
+        const table = String(params.table || "");
+        if (!ALLOWED[table]) return json({ error: "Invalid programme table" }, 400);
+        if (action === "list-programme") {
+          const { data, error } = await supabase.from(table).select("*").order("order_index", { ascending: true });
+          if (error) return json({ error: error.message }, 400);
+          return json({ rows: data || [] });
+        }
+        if (action === "insert-programme") {
+          const { table: _t, ...row } = params;
+          const { error } = await supabase.from(table).insert(row);
+          if (error) return json({ error: error.message }, 400);
+          return json({ success: true });
+        }
+        if (action === "update-programme") {
+          const { table: _t, id, ...updates } = params;
+          if (!id) return json({ error: "id required" }, 400);
+          const { error } = await supabase.from(table).update(updates).eq("id", id);
+          if (error) return json({ error: error.message }, 400);
+          return json({ success: true });
+        }
+        if (action === "delete-programme") {
+          if (!params.id) return json({ error: "id required" }, 400);
+          const { error } = await supabase.from(table).delete().eq("id", params.id);
+          if (error) return json({ error: error.message }, 400);
+          return json({ success: true });
+        }
+        return json({ error: "Unhandled programme action" }, 400);
+      }
+
       default:
         return json({ error: "Unknown action: " + action }, 400);
     }

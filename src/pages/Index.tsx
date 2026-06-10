@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 
 // Below-the-fold sections lazy-loaded to speed up initial paint
 const EventTimeline = lazy(() => import("@/components/EventTimeline"));
+const ProgrammePreview = lazy(() => import("@/components/ProgrammePreview"));
 const VenueSection = lazy(() => import("@/components/VenueSection"));
 const StorySection = lazy(() => import("@/components/StorySection"));
 const DressCode = lazy(() => import("@/components/DressCode"));
@@ -27,6 +28,7 @@ const Index = () => {
         </div>
         <Suspense fallback={<SectionSkeleton />}>
           <EventTimeline />
+          <ProgrammePreview />
           <VenueSection />
           <StorySection />
           <DressCode />
