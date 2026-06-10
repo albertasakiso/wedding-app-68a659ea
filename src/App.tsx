@@ -2,9 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom";
 import { useEffect, lazy, Suspense } from "react";
 import Index from "./pages/Index";
+import { useIsWeddingDayOrPast } from "./hooks/useSiteSettings";
+import { toast } from "@/hooks/use-toast";
 
 const RSVP = lazy(() => import("./pages/RSVP"));
 const Gallery = lazy(() => import("./pages/Gallery"));
@@ -13,6 +15,7 @@ const Admin = lazy(() => import("./pages/Admin"));
 const MyDay = lazy(() => import("./pages/MyDay"));
 const QrLanding = lazy(() => import("./pages/QrLanding"));
 const CheckIn = lazy(() => import("./pages/CheckIn"));
+const Programme = lazy(() => import("./pages/Programme"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
