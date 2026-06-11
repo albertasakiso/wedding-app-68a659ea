@@ -2,24 +2,37 @@ import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Heart, Calendar, CheckCircle2, Gift, MapPin, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { buildMapsLinkUrl } from "@/lib/maps-utils";
 import { isWeddingDayOrPast } from "@/hooks/useSiteSettings";
+import { fetchProgramme, PROGRAMME_QUERY_KEY } from "@/hooks/useProgramme";
 
 export default function QrLanding() {
   const [couple, setCouple] = useState("Albert & Ruby");
   const [mapHref, setMapHref] = useState<string>("https://www.google.com/maps");
   const [rsvpClosed, setRsvpClosed] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
-    supabase.from("site_settings").select("couple_names, wedding_date").limit(1).maybeSingle().then(({ data }) => {
-      if (data?.couple_names) setCouple(data.couple_names);
-      if (data?.wedding_date) setRsvpClosed(isWeddingDayOrPast(data.wedding_date));
+    Promise.all([
+      supabase.from("site_settings").select("couple_names, wedding_date").limit(1).maybeSingle(),
+      supabase.from("venue_info").select("name,address,map_url,latitude,longitude").limit(1).maybeSingle(),
+    ]).then(([s, v]) => {
+      if (s.data?.couple_names) setCouple(s.data.couple_names);
+      if (s.data?.wedding_date) setRsvpClosed(isWeddingDayOrPast(s.data.wedding_date));
+      if (v.data) setMapHref(buildMapsLinkUrl(v.data as any));
     });
-    supabase.from("venue_info").select("name,address,map_url,latitude,longitude").limit(1).maybeSingle().then(({ data }) => {
-      if (data) setMapHref(buildMapsLinkUrl(data as any));
+
+    // Warm up the most-tapped destination so navigation feels instant.
+    import("@/pages/Programme");
+    queryClient.prefetchQuery({
+      queryKey: PROGRAMME_QUERY_KEY,
+      queryFn: fetchProgramme,
+      staleTime: 5 * 60 * 1000,
     });
-  }, []);
+    import("@/pages/MyDay");
+  }, [queryClient]);
 
   const choices: Array<{
     icon: typeof Heart;
