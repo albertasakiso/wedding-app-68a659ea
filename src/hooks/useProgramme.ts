@@ -19,7 +19,12 @@ export interface ProgrammeData {
   thankYou: ProgrammeThankYou | null;
 }
 
-async function fetchProgramme(): Promise<ProgrammeData> {
+const EMPTY: ProgrammeData = {
+  sections: [], functionaries: [], orderOfService: [],
+  hymns: [], photography: [], credits: [], thankYou: null,
+};
+
+async function fetchViaParallelSelects(): Promise<ProgrammeData> {
   const [s, f, o, h, p, c, t] = await Promise.all([
     supabase.from("programme_sections").select("*").order("order_index"),
     supabase.from("programme_functionaries").select("*").order("order_index"),
@@ -40,10 +45,31 @@ async function fetchProgramme(): Promise<ProgrammeData> {
   };
 }
 
+export async function fetchProgramme(): Promise<ProgrammeData> {
+  // Single round-trip via RPC; fall back to per-table selects on error.
+  const { data, error } = await supabase.rpc("get_programme" as any);
+  if (error || !data) {
+    return fetchViaParallelSelects();
+  }
+  const d = data as any;
+  return {
+    sections: d.sections || [],
+    functionaries: d.functionaries || [],
+    orderOfService: d.orderOfService || [],
+    hymns: d.hymns || [],
+    photography: d.photography || [],
+    credits: d.credits || [],
+    thankYou: d.thankYou || null,
+  } as ProgrammeData;
+}
+
+export const PROGRAMME_QUERY_KEY = ["programme"] as const;
+
 export function useProgramme() {
   return useQuery({
-    queryKey: ["programme"],
+    queryKey: PROGRAMME_QUERY_KEY,
     queryFn: fetchProgramme,
     staleTime: 5 * 60 * 1000,
+    placeholderData: EMPTY,
   });
 }
