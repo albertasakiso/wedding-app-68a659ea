@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Heart, Download, ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
-import { downloadElementAsPdf } from "@/lib/programme-pdf";
 import { formatWeddingDate } from "@/lib/date-utils";
 import { useToast } from "@/hooks/use-toast";
+import ProgrammeSkeleton from "@/components/ProgrammeSkeleton";
 
 function GoldDivider() {
   return (
@@ -36,6 +36,8 @@ export default function Programme() {
     if (!printRef.current) return;
     setDownloading(true);
     try {
+      // Dynamic import keeps jspdf + html2canvas out of the initial route chunk.
+      const { downloadElementAsPdf } = await import("@/lib/programme-pdf");
       await downloadElementAsPdf(printRef.current, "Albert-and-Ruby-Wedding-Programme.pdf");
     } catch (e: any) {
       toast({ title: "Could not generate PDF", description: e?.message || "Please try again", variant: "destructive" });
@@ -44,7 +46,15 @@ export default function Programme() {
     }
   };
 
-  if (isLoading || !data) {
+  const hasData = !!data && (data.orderOfService.length > 0 || data.hymns.length > 0 || data.functionaries.length > 0 || !!data.thankYou);
+  if (isLoading && !hasData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-cream to-background">
+        <ProgrammeSkeleton />
+      </div>
+    );
+  }
+  if (!data) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

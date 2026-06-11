@@ -1,61 +1,71 @@
-## Round 13 — Programme CMS, wedding-day auto-hide, share thumbnail, QR additions
+# Speed & Polish: Programme + QR Landing
 
-### 1. Share link thumbnail (og:image)
-- The site currently has no `og:image`, so WhatsApp/iMessage/Slack render a blank thumbnail.
-- Generate a 1200×630 share card (monogram + "Albert & Ruby — 13 June 2026 · Church of Pentecost, Mpoasei Central, Dansoman") and save as `public/og-image.jpg`.
-- Add to `index.html`: `og:image`, `og:image:width/height`, `twitter:card=summary_large_image`, `twitter:image`. Keep paths absolute-relative (`/og-image.jpg`).
+## Why the programme doesn't load from QR
 
-### 2. Programme CMS (full CRUD in Admin)
-New Supabase tables (all with `order_index`, `section`-scoped where useful, RLS = public SELECT, admin via edge function):
+`src/pages/Programme.tsx` imports `src/lib/programme-pdf.ts` at the top, which statically imports `jspdf` (~150 KB gz) and `html2canvas` (~50 KB gz). Both ship in the Programme route chunk even though they are only used when the user taps "Download PDF". On a phone over 3G/4G this can stall or fail the route, so the page never appears after scanning the QR.
 
-| Table | Purpose | Key fields |
-|---|---|---|
-| `programme_sections` | Top-level toggle + ordering per section | `key` (order_of_service / functionaries / hymns / photography / exclusives / thank_you / cover), `title`, `enabled`, `order_index` |
-| `programme_functionaries` | Officiating Ministers, Counsellors, Protocol | `group` (ministers/counsellors/protocol), `name`, `affiliation`, `order_index` |
-| `programme_order_of_service` | Order of Service items | `item`, `led_by`, `order_index` |
-| `programme_hymns` | Hymns | `title`, `reference` (e.g. PSB-T 133), `author`, `lyrics` (markdown), `order_index` |
-| `programme_photography` | Order of Photography + Exclusives | `category` (order/exclusives), `label`, `order_index` |
-| `programme_credits` | Photography/Make-up/Decor/Gift Table contacts | `role`, `name`, `phone`, `order_index` |
-| `programme_thank_you` | Thank-you note (single row, rich text) | `body` |
+There are also 7 separate Supabase round-trips fired in parallel on mount (one per programme table) and no skeleton — the user sees a blank spinner the entire time.
 
-Seed all rows from the uploaded trifold images (front + back).
+## Plan
 
-Admin: new **Programme** tab in `AdminDashboard` with sub-tabs per table (reuse existing `EventsTab` pattern + `adminApi` actions: `list/insert/update/delete-programme-*`). New edge-function actions added to `supabase/functions/admin-api/index.ts`.
+### 1. Lazy-load PDF generation (biggest win)
+- In `Programme.tsx`, replace the static `import { downloadElementAsPdf } from "@/lib/programme-pdf"` with a dynamic import **inside the click handler**:
+  ```ts
+  const { downloadElementAsPdf } = await import("@/lib/programme-pdf");
+  ```
+- Result: `jspdf` + `html2canvas` move into their own chunk, fetched only when a guest taps "Download PDF". Programme route chunk shrinks dramatically.
 
-### 3. Programme display
-- **New `/programme` page** — full trifold-style layout (3 column on desktop, stacked on mobile), gold/ivory theme, sections in this order: Cover (monogram + date + venue + verse), Order of Service, Functionaries, Hymns, Photography, Exclusives, Credits, Thank You.
-- **Home page** — under `EventTimeline`, add a `ProgrammePreview` section: shows the next 4 Order-of-Service items + a "View Full Programme" CTA → `/programme`, and a "Download PDF" button.
-- Add Nav link "Programme".
+### 2. Manual Vite chunk splitting
+Update `vite.config.ts` `build.rollupOptions.output.manualChunks` to isolate heavy/optional libs so they don't bloat the main bundle:
+- `pdf` → `jspdf`, `html2canvas`
+- `charts`/`motion` → `framer-motion`
+- `vendor-react` → react, react-dom, react-router-dom
+- `vendor-supabase` → `@supabase/supabase-js`
+- `qrcode` → `qrcode`
 
-### 4. Download as PDF
-- Client-side generation using `jspdf` + `html2canvas` (already in stack-compatible deps; add via `bun add`).
-- "Download PDF" button on `/programme` and home preview renders the live `/programme` DOM → multi-page A4 PDF, gold theme preserved.
-- Filename: `Albert-and-Ruby-Wedding-Programme.pdf`.
+Also set `build.target: "es2020"` and `build.cssCodeSplit: true` (default but explicit).
 
-### 5. Auto-hide RSVP on wedding day
-Centralize in `useSiteSettings` → derive `isWeddingDayOrPast` from `wedding_date` (compare to `now()` at day granularity, Africa/Accra).
-Hide when true:
-- Nav "RSVP" link
-- Hero CTA "RSVP" button
-- QR landing "RSVP" entry
-- `/rsvp` route → redirect to `/` with a toast "RSVPs are closed — see you at the celebration!"
-Admin-only `/admin` access to RSVPs stays unchanged.
+### 3. Single RPC for programme data
+Add a Postgres RPC `get_programme()` (security definer, returns json) that returns all 7 tables in one round-trip. Update `useProgramme.ts` to call `supabase.rpc("get_programme")` instead of 7 separate selects. Falls back to the current parallel queries if the RPC errors (defensive). One TLS round-trip vs seven ⇒ noticeably faster on mobile.
 
-### 6. QR landing additions (`src/pages/QrLanding.tsx`)
-Reorder + add entries:
-1. Programme (NEW) → `/programme`, icon `BookOpen`
-2. Venue Location (existing)
-3. Check In
-4. Gifts
-5. RSVP (auto-hidden on/after wedding day)
-Keep the existing external-link pattern for Venue Location.
+### 4. Prefetch programme data + route from QR landing
+In `QrLanding.tsx`:
+- Prefetch the Programme route chunk on mount: `import("@/pages/Programme")` (fire-and-forget).
+- Prefetch programme data via `queryClient.prefetchQuery(["programme"], fetchProgramme)`.
+- When the guest then taps "Wedding Programme", the page is already warm.
 
-### 7. Files touched
-- New: `supabase/migrations/<ts>_programme_cms.sql`, `src/pages/Programme.tsx`, `src/components/ProgrammePreview.tsx`, `src/components/admin/ProgrammeTab.tsx` (+ sub-tab components), `src/lib/programme-pdf.ts`, `src/hooks/useProgramme.ts`, `public/og-image.jpg`.
-- Edited: `index.html`, `src/App.tsx` (route + RSVP redirect), `src/components/Navigation.tsx`, `src/components/Hero.tsx` (hide RSVP CTA), `src/pages/QrLanding.tsx`, `src/pages/Index.tsx` (mount ProgrammePreview), `src/hooks/useSiteSettings.ts` (expose `isWeddingDayOrPast`), `supabase/functions/admin-api/index.ts`, `src/components/admin/AdminDashboard.tsx`.
-- Dep adds: `jspdf`, `html2canvas`.
+### 5. Programme page UX polish
+- Replace the full-screen spinner with a **shimmer skeleton** matching the programme layout (cover + order-of-service list) so it feels instant.
+- Add `loading="lazy"` / `decoding="async"` to any imagery.
+- Add `<link rel="preconnect">` for the Supabase project URL in `index.html` to cut TLS handshake latency on first call.
+- Render sections in a `<Suspense>` boundary per major block to allow progressive paint (cover renders immediately even before data arrives).
 
-### Notes / open choices that I'll default unless you say otherwise
-- Cutoff time for "wedding day" hide: **start of the wedding date in Africa/Accra timezone** (so RSVP stays available until 00:00 on 13 June 2026).
-- PDF layout: **single-page A4 portrait** if it fits, otherwise multi-page; gold accents preserved via `html2canvas` rasterization (so it looks identical to the on-screen programme).
-- og:image: I'll generate a fresh elegant card matching the site theme — not the trifold scan (too dense for a 1200×630 preview).
+### 6. QR landing micro-fixes
+- Combine the two Supabase selects into a single Promise.all (already cheap, but use one effect, set both atomically).
+- Add subtle entrance fade and ensure tap targets meet 44 px on mobile (cards are already large — verify spacing).
+- Add `prefetch` `<link rel="modulepreload">` hints for the most-tapped routes (Programme, MyDay).
+
+### 7. Service-worker cache (optional, defer)
+`public/sw.js` exists. Add cache-first strategy for `/assets/*.js|css|woff2` and a stale-while-revalidate for the programme RPC response. Flagged optional — only do this if you want the page to work offline for guests with bad reception at the venue.
+
+## Files
+
+**Edit**
+- `src/pages/Programme.tsx` — dynamic import for PDF, skeleton, suspense
+- `src/lib/programme-pdf.ts` — no change to logic (kept for dynamic import target)
+- `src/hooks/useProgramme.ts` — switch to `rpc("get_programme")` with fallback
+- `src/pages/QrLanding.tsx` — prefetch route + data
+- `vite.config.ts` — manualChunks + target
+- `index.html` — preconnect to Supabase
+
+**New**
+- `supabase/migrations/<ts>_get_programme_rpc.sql` — single RPC returning all programme tables as JSON
+- `src/components/ProgrammeSkeleton.tsx` — shimmer skeleton for programme page
+
+## Expected impact
+- Programme route JS: ~250 KB → ~30 KB gz (PDF libs deferred)
+- Programme data fetch: 7 requests → 1 request
+- Perceived load on QR scan: blank spinner → instant skeleton, content within ~300 ms on 4G
+- "Download PDF" delay shifts to the moment of click (acceptable, user expects it)
+
+Confirm and I'll implement, or tell me which sections to drop (e.g. skip the RPC if you'd rather not add a migration, or skip the service worker).
